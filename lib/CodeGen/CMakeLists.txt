@@ -1,5 +1,4 @@
 add_llvm_library(LLVMCodeGen
-  AESRandomNumberGenerator.cpp
   AggressiveAntiDepBreaker.cpp
   AllocationOrder.cpp
   Analysis.cpp
@@ -66,6 +65,7 @@ add_llvm_library(LLVMCodeGen
   MachineTraceMetrics.cpp
   MachineVerifier.cpp
   MultiCompilerOptions.cpp
+  ObjectCodeEmitter.cpp
   OcamlGC.cpp
   OptimizePHIs.cpp
   PHIElimination.cpp
@@ -76,7 +76,6 @@ add_llvm_library(LLVMCodeGen
   ProcessImplicitDefs.cpp
   PrologEpilogInserter.cpp
   PseudoSourceValue.cpp
-  Rand48.cpp
   RegAllocBase.cpp
   RegAllocBasic.cpp
   RegAllocFast.cpp

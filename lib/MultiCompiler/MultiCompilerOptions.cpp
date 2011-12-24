@@ -13,9 +13,10 @@ namespace multicompiler {
 unsigned int RandomStackLayout;
 unsigned int MultiCompilerSeed;
 int PreRARandomizerRange;
-unsigned int MaxStackFramePadding; 
+unsigned int MaxStackFramePadding;
 std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
+unsigned int MaxNOPsPerInstruction;
 unsigned int MOVToLEAPercentage;
 unsigned int RandomizeFunctionList;
 
@@ -48,6 +49,12 @@ NOPInsertionPercentageOpt("nop-insertion-percentage",
                           llvm::cl::desc("Percentage of instructions that have NOPs prepended"),
                           llvm::cl::location(NOPInsertionPercentage),
                           llvm::cl::init(0));
+
+static llvm::cl::opt<unsigned int, true>
+MaxNOPsPerInstructionOpt("max-nops-per-instruction",
+                          llvm::cl::desc("Maximum number of NOPs per instruction"),
+                          llvm::cl::location(MaxNOPsPerInstruction),
+                          llvm::cl::init(1));
 
 static llvm::cl::opt<unsigned int, true>
 MOVToLeaPercentageOpt("mov-to-lea-percentage",

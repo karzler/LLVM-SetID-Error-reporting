@@ -16,6 +16,7 @@ namespace multicompiler {
  extern unsigned int MaxStackFramePadding;
  extern std::string RNGStateFile;
  extern unsigned int NOPInsertionPercentage;
+ extern unsigned int MaxNOPsPerInstruction;
  extern unsigned int MOVToLEAPercentage;
  extern unsigned int RandomizeFunctionList;
 }

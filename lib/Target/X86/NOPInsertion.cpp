@@ -58,7 +58,7 @@ public:
 
 char NOPInsertionPass::ID = 0;
 
-enum { NOP, MOV_EBP, MOV_ESP, 
+enum { NOP, MOV_EBP, MOV_ESP,
        LEA_ESI, LEA_EDI, MAX_NOPS };
 
 static const unsigned nopRegs[MAX_NOPS][2] = {
@@ -85,40 +85,42 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-      int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
-      unsigned int Roll = AESRandomNumberGenerator::Generator().random() % 100;
-      if (Roll >= multicompiler::NOPInsertionPercentage)
-        continue;
+      for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
+        int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
+        unsigned int Roll = AESRandomNumberGenerator::Generator().random() % 100;
+        if (Roll >= multicompiler::NOPInsertionPercentage)
+          continue;
 
-      // TODO(ahomescu): figure out if we need to preserve kill information
-      MachineInstr *NewMI = NULL;
-      unsigned reg = nopRegs[NOPCode][!!is64Bit];
-      switch (NOPCode) {
-      case NOP:
-        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::NOOP));
-        break;
+        // TODO(ahomescu): figure out if we need to preserve kill information
+        MachineInstr *NewMI = NULL;
+        unsigned reg = nopRegs[NOPCode][!!is64Bit];
+        switch (NOPCode) {
+        case NOP:
+          NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::NOOP));
+          break;
 
-      case MOV_EBP:
-      case MOV_ESP: {
-        unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
-        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
-          .addReg(reg);
-        break;
-      }
+        case MOV_EBP:
+        case MOV_ESP: {
+          unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
+          NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
+            .addReg(reg);
+          break;
+        }
 
-      case LEA_ESI:
-      case LEA_EDI: {
-        unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
-        NewMI = addRegOffset(BuildMI(Fn, I->getDebugLoc(),
-                                     TII->get(opc), reg),
-                             reg, false, 0);
-        break;
-      }
-      }
+        case LEA_ESI:
+        case LEA_EDI: {
+          unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
+          NewMI = addRegOffset(BuildMI(Fn, I->getDebugLoc(),
+                                       TII->get(opc), reg),
+                               reg, false, 0);
+          break;
+        }
+        }
 
-      if (NewMI != NULL) {
-        BB->insert(I, NewMI);
-        IncrementCounters(NOPCode);
+        if (NewMI != NULL) {
+          BB->insert(I, NewMI);
+          IncrementCounters(NOPCode);
+        }
       }
     }
   }

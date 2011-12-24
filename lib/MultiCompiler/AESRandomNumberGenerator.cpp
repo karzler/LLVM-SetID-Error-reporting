@@ -32,6 +32,8 @@
  * C++-ified by Todd Jackson
  */
 
+#define DEBUG_TYPE "aesrng"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/MultiCompiler/AESCounterModeRNG.h"
@@ -43,6 +45,8 @@
 #include <fstream>
 
 using namespace llvm;
+
+STATISTIC(RandomNumbersGenerated, "multicompiler: Number of random numbers generated");
 
 namespace multicompiler
 {
@@ -86,12 +90,14 @@ void AESRandomNumberGenerator::writeStateFile()
 uint64_t AESRandomNumberGenerator::random()
 {
     assert(ctx != NULL);
+    RandomNumbersGenerated++;
     return aesrng_random_u64(ctx);
 }
 
 uint64_t AESRandomNumberGenerator::randnext(uint64_t max)
 {
     assert(ctx != NULL);
+    RandomNumbersGenerated++;
     return aesrng_random_u64(ctx) % max;
 }
 

@@ -1770,6 +1770,20 @@ template<class SF>
 class RegReductionPriorityQueue : public RegReductionPQBase {
   SF Picker;
  
+  // For performance testing purposes only!!!
+  static SUnit *popWorst(std::vector<SUnit*> &Q, SF &Picker) {
+    std::vector<SUnit *>::iterator Worst = Q.begin();
+    for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
+           E = Q.end(); I != E; ++I)
+      if (Picker(*I, *Worst))
+        Worst = I;
+    SUnit *V = *Worst;
+    if (Worst != prior(Q.end()))
+      std::swap(*Worst, Q.back());
+    Q.pop_back();
+    return V;
+  }
+
   static SUnit *popRandom(std::vector<SUnit*> &Q) {
     std::vector<SUnit *>::iterator Best = Q.begin();
     multicompiler::Random::AESRandomNumberGenerator &randGen =
@@ -1807,6 +1821,8 @@ public:
     SUnit *V;
     if (multicompiler::PreRARandomizerRange == -1) {
       V = popRandom(Queue);
+    } else if (multicompiler::PreRARandomizerRange == -2) {
+      V = popWorst(Queue, Picker);
     } else {
       V = popFromQueue(Queue, Picker, scheduleDAG);
     }
@@ -1937,7 +1953,7 @@ unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
     // computation.  Give it a large SethiUllman number so it will be
     // scheduled right before its predecessors that it doesn't lengthen
     // their live ranges.
-    return multicompiler::PreRARandomizerRange ?
+    return (multicompiler::PreRARandomizerRange > 0) ?
       (1 + multicompiler::PreRARandomizerRange) : 0xffff;
   if (SU->NumPreds == 0 && SU->NumSuccs != 0)
     // If SU does not have a register def, schedule it close to its uses

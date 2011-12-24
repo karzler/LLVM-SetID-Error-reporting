@@ -32,8 +32,6 @@ STATISTIC(InsertedInstructions,    "multicompiler: Total number of inserted inst
 STATISTIC(NumNOPInstructions,      "multicompiler: Number of inserted NOP instructions");
 STATISTIC(NumMovEBPInstructions,   "multicompiler: Number of inserted MOV EBP, EBP instructions");
 STATISTIC(NumMovESPInstructions,   "multicompiler: Number of inserted MOV ESP, ESP instructions");
-STATISTIC(NumXchgEBPInstructions,  "multicompiler: Number of inserted XCHG EBP, EBP instructions");
-STATISTIC(NumXchgESPInstructions,  "multicompiler: Number of inserted XCHG ESP, ESP instructions");
 STATISTIC(NumLeaESIInstructions,   "multicompiler: Number of inserted LEA ESI, ESI instructions");
 STATISTIC(NumLeaEDIInstructions,   "multicompiler: Number of inserted LEA EDI, EDI instructions");
 
@@ -60,15 +58,13 @@ public:
 
 char NOPInsertionPass::ID = 0;
 
-enum { NOP, MOV_EBP, /*XCHG_EBP,*/ MOV_ESP, /*XCHG_ESP,*/
+enum { NOP, MOV_EBP, MOV_ESP, 
        LEA_ESI, LEA_EDI, MAX_NOPS };
 
 static const unsigned nopRegs[MAX_NOPS][2] = {
     { 0, 0 },
     { X86::EBP, X86::RBP },
-    /*{ X86::EBP, X86::RBP },*/
     { X86::ESP, X86::RSP },
-    /*{ X86::ESP, X86::RSP },*/
     { X86::ESI, X86::RSI },
     { X86::EDI, X86::RDI },
 };
@@ -81,8 +77,6 @@ void NOPInsertionPass::IncrementCounters(int const code) {
   case MOV_ESP:  ++NumMovESPInstructions; break;
   case LEA_ESI:  ++NumLeaESIInstructions; break;
   case LEA_EDI:  ++NumLeaEDIInstructions; break;
-/*  case XCHG_EBP: ++NumXchgEBPInstructions; break;
-  case XCHG_ESP: ++NumXchgESPInstructions; break;*/
   }
 }
 
@@ -111,14 +105,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           .addReg(reg);
         break;
       }
-
-      /*case XCHG_EBP:
-      case XCHG_ESP: {
-        unsigned opc = is64Bit ? X86::XCHG64rr : X86::XCHG32rr;
-        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
-          .addReg(reg).addReg(reg);
-        break;
-      }*/
 
       case LEA_ESI:
       case LEA_EDI: {

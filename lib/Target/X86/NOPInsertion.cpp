@@ -54,6 +54,16 @@ char NOPInsertionPass::ID = 0;
 enum { NOP, MOV_EBP, XCHG_EBP, MOV_ESP, XCHG_ESP,
        LEA_ESI, LEA_EDI, MAX_NOPS };
 
+static const unsigned nopRegs[MAX_NOPS][2] = {
+    { 0, 0 },
+    { X86::EBP, X86::RBP },
+    { X86::EBP, X86::RBP },
+    { X86::ESP, X86::RSP },
+    { X86::ESP, X86::RSP },
+    { X86::ESI, X86::RSI },
+    { X86::EDI, X86::RDI },
+};
+
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
@@ -67,6 +77,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       ++InsertedInstructions;
       // TODO(ahomescu): figure out if we need to preserve kill information
       MachineInstr *NewMI = NULL;
+      unsigned reg = nopRegs[NOPCode][!!is64Bit];
       switch (NOPCode) {
       case NOP:
         NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::NOOP));
@@ -74,7 +85,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
       case MOV_EBP:
       case MOV_ESP: {
-        unsigned reg = (NOPCode == MOV_EBP) ? X86::EBP : X86::ESP;
         unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
         NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
           .addReg(reg);
@@ -83,7 +93,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
       case XCHG_EBP:
       case XCHG_ESP: {
-        unsigned reg = (NOPCode == XCHG_EBP) ? X86::EBP : X86::ESP;
         unsigned opc = is64Bit ? X86::XCHG64rr : X86::XCHG32rr;
         NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
           .addReg(reg).addReg(reg);
@@ -92,7 +101,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
       case LEA_ESI:
       case LEA_EDI: {
-        unsigned reg = (NOPCode == LEA_ESI) ? X86::ESI : X86::EDI;
         unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
         NewMI = addRegOffset(BuildMI(Fn, I->getDebugLoc(),
                                      TII->get(opc), reg),

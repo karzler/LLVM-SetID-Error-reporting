@@ -28,175 +28,35 @@
  *  http://csrc.nist.gov/encryption/aes/rijndael/Rijndael.pdf
  *  http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
  */
-/*
- * C++-ified by Todd Jackson
+/* 
+ * Modified to act as random number generator by Todd Jackson
  */
 
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Debug.h"
-#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <unistd.h>
-#include <fstream>
-#include <cstring>
-#include <cstdlib>
 
-using namespace llvm;
+#include "llvm/MultiCompiler/AESCounterModeRNG.h"
 
-namespace multicompiler
-{
-namespace Random
-{
+static const int INVALID_KEY_LENGTH = -0x0800;
+static const int INVALID_INPUT_LENGTH = -0x0810;
 
-AESRandomNumberGenerator::AESRandomNumberGenerator( ) : Random(), counter(0), keylength(16), aes_init_done(false)
-{
-    memset(&ctx, 0x00, sizeof(aes_context));
-    memset(nonce, 0x00, sizeof(nonce));
-    memset(plaintext, 0x00, sizeof(plaintext));
+static unsigned int aes_init_done = 0;
 
-    key = new uint8_t[keylength];
+/* Round Constants */
+uint32_t RCON[10];
 
-    readStateFile();
-}
-
-AESRandomNumberGenerator::AESRandomNumberGenerator(AESRandomNumberGenerator const& a) : Random()
-{
-    memcpy(&ctx, &a.ctx, sizeof(aes_context));
-    memcpy(nonce, &a.nonce, sizeof(nonce));
-    keylength = a.keylength;
-    key = new uint8_t[keylength];
-    memcpy(key, &a.key, sizeof(key));
-}
-
-AESRandomNumberGenerator::~AESRandomNumberGenerator()
-{
-    writeStateFile();
-    delete[] key;
-}
-
-void AESRandomNumberGenerator::readStateFile()
-{
-    struct stat s;
-    // Don't read if there's no file specified.
-    if (multicompiler::RNGStateFile == "" || stat(multicompiler::RNGStateFile.c_str(), &s) != 0) {
-        defaultInitialization();
-        return;
-    }
-
-    std::ifstream statefile(multicompiler::RNGStateFile.c_str(), std::ios::in | std::ios::binary);
-    DEBUG(errs() << "Reading RNG state file from " << multicompiler::RNGStateFile << "\n");
-
-    // uint16_t: keysize
-    statefile.read((char *)&keylength, sizeof(uint16_t));
-    key = new uint8_t[keylength];
-
-    // keylength * uint8_t: key
-    statefile.read((char *)key, keylength * sizeof(uint8_t));
-
-    // 16 * uint8_t: plaintext
-    statefile.read((char *)plaintext, 16 * sizeof(uint8_t));
-
-    // 8 * uint8_t: nonce
-    statefile.read((char *)nonce, 8 * sizeof(uint8_t));
-
-    // uint64_t: counter
-    statefile.read((char *)&counter, sizeof(uint64_t));
-
-    ctx.rk = ctx.buf;
-
-    if (aes_init_done == false) {
-        aes_gen_tables();
-        aes_init_done = true;
-    }
-    aes_set_rounds();
-    aes_gen_round_keys();
-}
-
-void AESRandomNumberGenerator::writeStateFile()
-{
-    //Don't serialise without a file name
-    if (multicompiler::RNGStateFile == "") return;
-
-    std::ofstream statefile(multicompiler::RNGStateFile.c_str(), std::ios::out | std::ios::binary);
-    DEBUG(errs() << "Writing RNG state file to " << multicompiler::RNGStateFile << "\n");
-    statefile.write((char *)&keylength, sizeof(uint16_t));
-    statefile.write((char *)key, keylength * sizeof(uint8_t));
-    statefile.write((char *)plaintext, 16 * sizeof(uint8_t));
-    statefile.write((char *)nonce, 8 * sizeof(uint8_t));
-    statefile.write((char *)&counter, sizeof(uint64_t));
-}
-
-void AESRandomNumberGenerator::defaultInitialization()
-{
-    const uint8_t default_key[] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
-    const uint8_t default_plaintext[] = {0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a};
-    const uint8_t default_testvector[] = {0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff};
-    keylength = 16;
-    counter = 0;
-    memcpy(key, default_key, 16 * sizeof(uint8_t));
-    memcpy(nonce, default_testvector, 8 * sizeof(uint8_t));
-    memcpy(&counter, default_testvector + 8, sizeof(uint64_t));
-    memcpy(plaintext, default_plaintext, 16 * sizeof(uint8_t));
-
-    aes_setkey_enc();
-}
-
-void AESRandomNumberGenerator::incrementBigEndianUInt64(uint8_t* val)
-{
-    if (val[7] == 0xff) {
-        val[7] = 0x00;
-        val[6]++;
-    } else if (val[7] == 0xff && val[6] == 0xff) {
-        val[7] = val[6] = 0x00;
-        val[5]++;
-    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff) {
-        val[7] = val[6] = val[5] = 0x00;
-        val[4]++;
-    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff) {
-        val[7] = val[6] = val[5] = val[4] = 0x00;
-        val[3]++;
-    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
-               && val[2] == 0xff) {
-        val[7] = val[6] = val[5] = val[4] = val[3] = val[2] = 0x00;
-        val[1]++;
-    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
-               && val[2] == 0xff && val[1] == 0xff) {
-        val[7] = val[6] = val[5] = val[4] = val[3] = val[2] = val[1] = 0x00;
-        val[0]++;
-    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
-               && val[2] == 0xff && val[1] == 0xff && val[0] == 0xff) {
-        memset(val, 0x00, 8);
-    } else val[7]++;
-}
-
-uint64_t AESRandomNumberGenerator::random()
-{
-    uint8_t input[16];
-    uint8_t output[16];
-    int i;
-    uint64_t result;
-
-    memcpy(input, (char *)nonce, sizeof(uint64_t));
-    memcpy(input + 8, (char *)&counter, sizeof(uint64_t));
-    aes_crypt_ecb(&ctx, input, output);
-    for (i = 0; i < 16; i++) output[i] ^= plaintext[i];
-    memcpy((char *)&result, (char *)output, sizeof(uint64_t));
-
-    incrementBigEndianUInt64((uint8_t *)&counter);
-
-    // We only use the first 64 bits - we throw the rest away.
-    // TODO(tmjackso): Do we need 128 bits?  There is no uint128_t.
-    memcpy((char *)&result, (char *)output, sizeof(uint64_t));
-
-    return result;
-}
-
-uint64_t AESRandomNumberGenerator::randnext(uint64_t max)
-{
-    return random() % max;
-}
+/*
+ * Forward S-box & tables
+ */
+uint8_t FSb[256];
+uint32_t FT0[256];
+uint32_t FT1[256];
+uint32_t FT2[256];
+uint32_t FT3[256];
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -228,7 +88,36 @@ uint64_t AESRandomNumberGenerator::randnext(uint64_t max)
 #define XTIME(x) ( ( x << 1 ) ^ ( ( x & 0x80 ) ? 0x1B : 0x00 ) )
 #define MUL(x,y) ( ( x && y ) ? pow[(log[x]+log[y]) % 255] : 0 )
 
-void AESRandomNumberGenerator::aes_gen_tables( void )
+
+void incrementBigEndianUInt64(uint8_t* val)
+{
+    if (val[7] == 0xff) {
+        val[7] = 0x00;
+        val[6]++;
+    } else if (val[7] == 0xff && val[6] == 0xff) {
+        val[7] = val[6] = 0x00;
+        val[5]++;
+    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff) {
+        val[7] = val[6] = val[5] = 0x00;
+        val[4]++;
+    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff) {
+        val[7] = val[6] = val[5] = val[4] = 0x00;
+        val[3]++;
+    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
+               && val[2] == 0xff) {
+        val[7] = val[6] = val[5] = val[4] = val[3] = val[2] = 0x00;
+        val[1]++;
+    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
+               && val[2] == 0xff && val[1] == 0xff) {
+        val[7] = val[6] = val[5] = val[4] = val[3] = val[2] = val[1] = 0x00;
+        val[0]++;
+    } else if (val[7] == 0xff && val[6] == 0xff && val[5] == 0xff && val[4] == 0xff
+               && val[2] == 0xff && val[1] == 0xff && val[0] == 0xff) {
+        memset(val, 0x00, 8);
+    } else val[7]++;
+}
+
+void aes_gen_tables(void)
 {
     int32_t i, x, y, z;
     int32_t pow[256];
@@ -288,60 +177,21 @@ void AESRandomNumberGenerator::aes_gen_tables( void )
         FT1[i] = ROTL8( FT0[i] );
         FT2[i] = ROTL8( FT1[i] );
         FT3[i] = ROTL8( FT2[i] );
-
     }
 }
 
-/*
- * AES key schedule (encryption)
- */
-int AESRandomNumberGenerator::aes_setkey_enc(void)
-{
-    if ( aes_init_done == false ) {
-        aes_gen_tables();
-        aes_init_done = true;
-    }
-
-    aes_set_rounds();
-
-    ctx.rk = ctx.buf;
-
-    aes_gen_round_keys();
-
-    return 0;
-}
-
-int AESRandomNumberGenerator::aes_set_rounds(void)
-{
-    switch (keylength) {
-    case 16:
-        ctx.nr = 10;
-        break;
-    case 24:
-        ctx.nr = 12;
-        break;
-    case 32:
-        ctx.nr = 14;
-        break;
-    default:
-        return INVALID_KEY_LENGTH;
-
-    }
-    return 0;
-}
-
-void AESRandomNumberGenerator::aes_gen_round_keys(void)
+void aes_gen_round_keys(aesrng_context* ctx)
 {
     uint32_t *RK;
     uint32_t i;
-    uint32_t keysize = keylength * 8;
-    RK = ctx.buf;
+    uint32_t keysize = ctx->keylength * 8;
+    RK = ctx->buf;
 
     for ( i = 0; i < (keysize >> 5); i++ ) {
-        GET_ULONG_LE( RK[i], key, i << 2 );
+        GET_ULONG_LE( RK[i], ctx->key, i << 2 );
     }
 
-    switch ( ctx.nr ) {
+    switch(ctx->nr) {
     case 10:
         for ( i = 0; i < 10; i++, RK += 4 ) {
             RK[4]  = RK[0] ^ RCON[i] ^
@@ -398,6 +248,43 @@ void AESRandomNumberGenerator::aes_gen_round_keys(void)
     }
 }
 
+int aes_set_rounds(aesrng_context* ctx)
+{
+    switch (ctx->keylength) {
+    case 16:
+        ctx->nr = 10;
+        break;
+    case 24:
+        ctx->nr = 12;
+        break;
+    case 32:
+        ctx->nr = 14;
+        break;
+    default:
+        return INVALID_KEY_LENGTH;
+    }
+    return 0;
+}
+
+/*
+ * AES key schedule (encryption)
+ */
+int aes_setkey_enc(aesrng_context* ctx)
+{
+    if(aes_init_done == 0){
+        aes_gen_tables();
+        aes_init_done = 1;
+    }
+
+    aes_set_rounds(ctx);
+
+    ctx->rk = ctx->buf;
+
+    aes_gen_round_keys(ctx);
+
+    return 0;
+}
+
 #define AES_FROUND(X0,X1,X2,X3,Y0,Y1,Y2,Y3)     \
 		{                                               \
 			X0 = *RK++ ^ FT0[ ( Y0       ) & 0xFF ] ^   \
@@ -424,9 +311,7 @@ void AESRandomNumberGenerator::aes_gen_round_keys(void)
 /*
  * AES-ECB block encryption/decryption
  */
-int AESRandomNumberGenerator::aes_crypt_ecb( aes_context *ctx,
-        const unsigned char input[16],
-        unsigned char output[16] )
+int aes_crypt_ecb(aesrng_context *ctx, const unsigned char input[16], unsigned char output[16])
 {
     int i;
     uint32_t *RK, X0, X1, X2, X3, Y0, Y1, Y2, Y3;
@@ -441,40 +326,7 @@ int AESRandomNumberGenerator::aes_crypt_ecb( aes_context *ctx,
     X2 ^= *RK++;
     GET_ULONG_LE( X3, input, 12 );
     X3 ^= *RK++;
-#if 0
-    if ( mode == AES_DECRYPT ) {
-        for ( i = (ctx->nr >> 1) - 1; i > 0; i-- ) {
-            AES_RROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
-            AES_RROUND( X0, X1, X2, X3, Y0, Y1, Y2, Y3 );
-        }
 
-        AES_RROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
-
-        X0 = *RK++ ^ \
-             ( (uint32_t) RSb[ ( Y0       ) & 0xFF ]       ) ^
-             ( (uint32_t) RSb[ ( Y3 >>  8 ) & 0xFF ] <<  8 ) ^
-             ( (uint32_t) RSb[ ( Y2 >> 16 ) & 0xFF ] << 16 ) ^
-             ( (uint32_t) RSb[ ( Y1 >> 24 ) & 0xFF ] << 24 );
-
-        X1 = *RK++ ^ \
-             ( (uint32_t) RSb[ ( Y1       ) & 0xFF ]       ) ^
-             ( (uint32_t) RSb[ ( Y0 >>  8 ) & 0xFF ] <<  8 ) ^
-             ( (uint32_t) RSb[ ( Y3 >> 16 ) & 0xFF ] << 16 ) ^
-             ( (uint32_t) RSb[ ( Y2 >> 24 ) & 0xFF ] << 24 );
-
-        X2 = *RK++ ^ \
-             ( (uint32_t) RSb[ ( Y2       ) & 0xFF ]       ) ^
-             ( (uint32_t) RSb[ ( Y1 >>  8 ) & 0xFF ] <<  8 ) ^
-             ( (uint32_t) RSb[ ( Y0 >> 16 ) & 0xFF ] << 16 ) ^
-             ( (uint32_t) RSb[ ( Y3 >> 24 ) & 0xFF ] << 24 );
-
-        X3 = *RK++ ^ \
-             ( (uint32_t) RSb[ ( Y3       ) & 0xFF ]       ) ^
-             ( (uint32_t) RSb[ ( Y2 >>  8 ) & 0xFF ] <<  8 ) ^
-             ( (uint32_t) RSb[ ( Y1 >> 16 ) & 0xFF ] << 16 ) ^
-             ( (uint32_t) RSb[ ( Y0 >> 24 ) & 0xFF ] << 24 );
-    } else { /* AES_ENCRYPT */
-#endif
         for ( i = (ctx->nr >> 1) - 1; i > 0; i-- ) {
             AES_FROUND( Y0, Y1, Y2, Y3, X0, X1, X2, X3 );
             AES_FROUND( X0, X1, X2, X3, Y0, Y1, Y2, Y3 );
@@ -505,9 +357,6 @@ int AESRandomNumberGenerator::aes_crypt_ecb( aes_context *ctx,
              ( (uint32_t) FSb[ ( Y0 >>  8 ) & 0xFF ] <<  8 ) ^
              ( (uint32_t) FSb[ ( Y1 >> 16 ) & 0xFF ] << 16 ) ^
              ( (uint32_t) FSb[ ( Y2 >> 24 ) & 0xFF ] << 24 );
-#if 0
-    }
-#endif
     PUT_ULONG_LE( X0, output,  0 );
     PUT_ULONG_LE( X1, output,  4 );
     PUT_ULONG_LE( X2, output,  8 );
@@ -516,6 +365,126 @@ int AESRandomNumberGenerator::aes_crypt_ecb( aes_context *ctx,
     return( 0 );
 }
 
-} // namespace Random
+void aesrng_initialize_to_default(aesrng_context** ctx)
+{
+    const uint8_t default_key[] = {0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c};
+    const uint8_t default_plaintext[] = {0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96, 0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a};
+    const uint8_t default_testvector[] = {0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff};
 
-} // namespace multicompiler
+    *ctx = (aesrng_context*)malloc(sizeof(aesrng_context));
+    (*ctx)->keylength = 16;
+    (*ctx)->key = (uint8_t*)malloc((*ctx)->keylength * sizeof(uint8_t));
+    (*ctx)->counter = 0;
+    memcpy((*ctx)->key, default_key, (*ctx)->keylength * sizeof(uint8_t));
+    memcpy((*ctx)->nonce, default_testvector, 8 * sizeof(uint8_t));
+    memcpy(&((*ctx)->counter), default_testvector + 8, sizeof(uint64_t));
+    memcpy((*ctx)->plaintext, default_plaintext, 16 * sizeof(uint8_t));
+
+    aes_setkey_enc(*ctx);
+}
+
+void aesrng_initialize(aesrng_context** ctx, uint64_t counter, uint16_t keylength)
+{
+    (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
+    (*ctx)->counter = counter;
+    (*ctx)->keylength = keylength;
+}
+
+void aesrng_initialize_to_empty(aesrng_context** ctx)
+{
+    (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
+    memset(*ctx, 0x00, sizeof(aesrng_context));
+}
+
+void aesrng_destroy(aesrng_context* ctx)
+{
+    free(ctx->key);
+    free(ctx);
+}
+
+void aesrng_restore_state(aesrng_context* ctx, const char* filename)
+{
+    struct stat s;
+    /* Don't read if there's no file specified.
+     * TODO(tmjackso): This probably shouldn't fail silently. */
+    if (filename == NULL || stat(filename, &s) != 0) {
+        return;
+    }
+
+    int fhandle = open(filename, O_RDONLY);
+
+    /* uint16_t: keysize */
+    read(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
+
+    /* Create key, now that we know how big it is */
+    ctx->key = (uint8_t *)malloc(ctx->keylength * sizeof(uint8_t)); 
+
+    /* keylength * uint8_t: key */
+    read(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
+
+    /* 16 * uint8_t: plaintext */
+    read(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
+
+    /* 8 * uint8_t: nonce */
+    read(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
+
+    /* uint64_t: counter */
+    read(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
+
+    ctx->rk = ctx->buf;
+
+    /* Global AES init */
+    if(aes_init_done == 0) {
+        aes_gen_tables();
+        aes_init_done = 1;
+    }
+
+    aes_set_rounds(ctx);
+    aes_gen_round_keys(ctx);
+}
+
+void aesrng_write_state(aesrng_context* ctx, const char* filename)
+{
+    /* Don't serialise without a file name */
+    if (filename == NULL) return;
+
+    int fhandle = open(filename, O_WRONLY);
+    write(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
+    write(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
+    write(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
+    write(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
+    write(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
+}
+
+void aesrng_random_u128(aesrng_context* ctx, uint128_t* val)
+{
+    uint8_t input[16];
+    uint8_t output[16];
+    int i;
+
+    memcpy(input, (char *)ctx->nonce, sizeof(uint64_t));
+    memcpy(input + 8, (char *)&(ctx->counter), sizeof(uint64_t));
+    aes_crypt_ecb(ctx, input, output);
+    for (i = 0; i < 16; i++) output[i] ^= ctx->plaintext[i];
+    memcpy((char *)&(val->hi), (char *)output, sizeof(uint64_t));
+    memcpy((char *)&(val->lo), (char *)(output + 8), sizeof(uint64_t));
+
+    /* Counter increment */
+    incrementBigEndianUInt64((uint8_t *)&(ctx->counter));
+}
+
+uint64_t aesrng_random_u64(aesrng_context* ctx)
+{
+    uint128_t val;
+    aesrng_random_u128(ctx, &val);
+    return val.lo;
+}
+
+uint32_t aesrng_random_u32(aesrng_context* ctx)
+{
+    uint128_t val;
+    uint32_t i;
+    aesrng_random_u128(ctx, &val);
+    memcpy((char *)&i, (char *)(val.lo + 4), sizeof(uint32_t));
+    return i;
+}

@@ -26,9 +26,9 @@
 using namespace llvm;
 using namespace multicompiler::Random;
 
-STATISTIC(MOVCandidates, "multicompiler: # of MOV candidates");
-STATISTIC(ReplacedMOV, "multicompiler: # of substituted MOV instructions");
-STATISTIC(InstructionCount, "multicompiler: # of instructions");
+STATISTIC(MOVCandidates, "multicompiler: Number of MOV candidates");
+STATISTIC(ReplacedMOV, "multicompiler: Number of substituted MOV instructions");
+STATISTIC(InstructionCount, "multicompiler: Number of instructions");
 
 namespace {
 class MOVToLEAPass : public MachineFunctionPass {

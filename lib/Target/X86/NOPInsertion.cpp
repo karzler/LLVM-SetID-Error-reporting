@@ -86,10 +86,11 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
     PreNOPInstructionCount += BB->size();
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
-        int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
         unsigned int Roll = AESRandomNumberGenerator::Generator().random() % 100;
         if (Roll >= multicompiler::NOPInsertionPercentage)
           continue;
+
+        int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
 
         // TODO(ahomescu): figure out if we need to preserve kill information
         MachineInstr *NewMI = NULL;

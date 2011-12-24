@@ -43,6 +43,8 @@ STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
 STATISTIC(NumDups,       "Number of duplicated nodes");
 STATISTIC(NumPRCopies,   "Number of physical register copies");
+STATISTIC(NumChoices,    "multicompiler: Number of choices at dequeue");
+STATISTIC(NumOptions,    "multicompiler: of options to choose at dequeue");
 
 static RegisterScheduler
   burrListDAGScheduler("list-burr",
@@ -1773,6 +1775,8 @@ class RegReductionPriorityQueue : public RegReductionPQBase {
     multicompiler::Random::AESRandomNumberGenerator &randGen =
       multicompiler::Random::AESRandomNumberGenerator::Generator();
     size_t randIndex = randGen.randnext(Q.size());
+    ++NumChoices;
+    NumOptions += Q.size();
     SUnit *V = Q[randIndex];
     if (randIndex < Q.size() - 1)
       std::swap(Q[randIndex], Q.back());

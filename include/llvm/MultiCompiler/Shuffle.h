@@ -14,7 +14,7 @@
         int i;
         uint32_t j;
         for (i = length - 1; i > 0; i--) {
-            j = randnext(length);
+            j = randnext(i);
             swap(&array[j], &array[i]);
         }
     }
@@ -26,7 +26,7 @@
     void shuffle(llvm::SmallVector<T, N>& sv) {
         if (sv.empty()) return;
         for (size_t i = sv.size() - 1; i > 0; i--) {
-            uint32_t j = randnext(sv.size());
+            uint32_t j = randnext(i);
             T k = sv[j];
             sv[j] = sv[i];
             sv[i] = k;

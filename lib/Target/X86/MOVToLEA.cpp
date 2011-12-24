@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "nop-insertion"
+#define DEBUG_TYPE "mov-to-lea"
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -21,8 +21,14 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/Statistic.h"
+
 using namespace llvm;
 using namespace multicompiler::Random;
+
+STATISTIC(MOVCandidates, "multicompiler: # of MOV candidates");
+STATISTIC(ReplacedMOV, "multicompiler: # of substituted MOV instructions");
+STATISTIC(InstructionCount, "multicompiler: # of instructions");
 
 namespace {
 class MOVToLEAPass : public MachineFunctionPass {
@@ -47,6 +53,7 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
   bool Changed = false;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
+      ++InstructionCount;
       if (I->getOpcode() != X86::MOV32rr || I->getNumOperands() != 2 ||
           !I->getOperand(0).isReg() || !I->getOperand(1).isReg()) {
         ++I;
@@ -54,11 +61,13 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
       }
 
       unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      ++MOVCandidates;
       if (Roll >= multicompiler::MOVToLEAPercentage) {
         ++I;
         continue;
       }
 
+      ++ReplacedMOV;
       MachineBasicBlock::iterator J = I;
       ++I;
       addRegOffset(BuildMI(*BB, J, J->getDebugLoc(),

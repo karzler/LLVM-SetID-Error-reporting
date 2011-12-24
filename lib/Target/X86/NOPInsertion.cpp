@@ -21,11 +21,17 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/Statistic.h"
+
 using namespace llvm;
 using namespace multicompiler::Random;
 
+STATISTIC(InsertionOpportunities, "multicompiler: # of NOP insertion opportunities");
+STATISTIC(InsertedInstructions, "multicompiler: # of inserted instructions");
+
 namespace {
 class NOPInsertionPass : public MachineFunctionPass {
+
   static char ID;
 
 public:
@@ -49,11 +55,13 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+      ++InsertionOpportunities;
       int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
       unsigned int Roll = AESRandomNumberGenerator::Generator().random() % 100;
       if (Roll >= multicompiler::NOPInsertionPercentage)
         continue;
 
+      ++InsertedInstructions;
       // TODO(ahomescu): figure out if we need to preserve kill information
       MachineInstr *NewMI = NULL;
       switch (NOPCode) {
@@ -91,6 +99,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         BB->insert(I, NewMI);
       }
     }
+  //printf("Opportunities: %d Inserted: %d\n", multicompiler::NOPInsertionOpportunities, multicompiler::InsertedNOPCounter);
   return true;
 }
 

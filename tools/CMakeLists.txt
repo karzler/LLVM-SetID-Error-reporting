@@ -46,6 +46,8 @@ add_subdirectory(llvm-symbolizer)
 add_subdirectory(obj2yaml)
 add_subdirectory(yaml2obj)
 
+add_subdirectory(ld-randomize-script)
+
 if( NOT WIN32 )
   add_subdirectory(lto)
 endif()

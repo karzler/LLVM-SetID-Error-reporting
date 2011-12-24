@@ -223,6 +223,16 @@ bool X86PassConfig::addPreEmitPass() {
     ShouldPrint = true;
   }
 
+  if (!Subtarget.is64Bit()) {
+    // NOTE: these must be added in exactly this order
+    // as they interfere with each other
+    // MOVToLEA might change the MOVs inserted as NOPs
+    // into LEAs, which we don't want to happen
+    PM.add(createMOVToLEAPass());
+    PM.add(createNOPInsertionPass());
+    ShouldPrint = true;
+  }
+
   return ShouldPrint;
 }
 

@@ -52,6 +52,14 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// AVX and SSE.
 FunctionPass *createX86IssueVZeroUpperPass();
 
+/// createMOVToLEAPass - This pass changes some register-to-register MOVs
+/// to equivalent LEA instructions.
+FunctionPass *createMOVToLEAPass();
+
+/// createNOPInsertionPass - This pass adds NOPs at random between
+/// instructions.
+FunctionPass *createNOPInsertionPass();
+
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,

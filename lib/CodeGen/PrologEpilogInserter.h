@@ -48,6 +48,9 @@ namespace llvm {
     bool runOnMachineFunction(MachineFunction &Fn);
 
   private:
+    // Stack frame padding -- only applied once
+    bool PaddingApplied;
+
     RegScavenger *RS;
 
     // MinCSFrameIndex, MaxCSFrameIndex - Keeps the range of callee saved

@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -32,6 +33,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
+#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -40,8 +43,12 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <climits>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+using namespace multicompiler;
+
+
 
 char PEI::ID = 0;
 char &llvm::PrologEpilogCodeInserterID = PEI::ID;
@@ -608,24 +615,57 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     }
   }
 
+  // Stack Layout Randomization
+  // code to select whether loop index runs from 0 to MFI->getObjectIndexEnd() - 1
+  // or from MFI->getObjectIndexEnd() - 1 to 0. Two different increments
+  // are needed for the loop index as it is unsigned.
+  
+  PaddingApplied = false;
+  SmallVector<unsigned, 10> array;
+  for(int i = 0; i < MFI->getObjectIndexEnd(); i++) array.push_back(i);
+
+  if(RandomStackLayout){
+    // Stack frame padding
+    // If we haven't applied a pad yet, do so now.
+    if (!PaddingApplied) {
+      uint32_t pad = Random::AESRandomNumberGenerator::Generator().randnext(MaxStackFramePadding);
+      Offset += pad;
+      DEBUG(dbgs() << "Stack frame pad size " << Offset << " Max " 
+                   << MaxStackFramePadding << "\n");
+      PaddingApplied = true;
+    }
+    Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
+    for(size_t i = 0; i < array.size(); i++) DEBUG(dbgs() << array[i] << " ");
+    DEBUG(dbgs() << "\n");
+  }
+
   // Then assign frame offsets to stack objects that are not used to spill
   // callee saved registers.
-  for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-    if (MFI->isObjectPreAllocated(i) &&
+  for(int i = 0; i != MFI->getObjectIndexEnd(); ++i) {
+  //	i += loopIndexBodyIncrement;
+  //  for (unsigned i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
+  //  for (unsigned i = MFI->getObjectIndexEnd(); i != 0; ) {
+  //	--i;
+    if (MFI->isObjectPreAllocated(array[i]) &&
         MFI->getUseLocalStackAllocationBlock())
       continue;
-    if (i >= MinCSFrameIndex && i <= MaxCSFrameIndex)
+    if (array[i] >= MinCSFrameIndex && array[i] <= MaxCSFrameIndex)
       continue;
-    if (RS && RS->isScavengingFrameIndex((int)i))
+    if (RS && RS->isScavengingFrameIndex((int)array[i]))
       continue;
-    if (MFI->isDeadObjectIndex(i))
+    if (MFI->isDeadObjectIndex(array[i]))
       continue;
-    if (MFI->getStackProtectorIndex() == (int)i)
+    if (MFI->getStackProtectorIndex() == (int)array[i])
       continue;
-    if (LargeStackObjs.count(i))
+    if (LargeStackObjs.count(array[i]))
       continue;
 
-    AdjustStackOffset(MFI, i, StackGrowsDown, Offset, MaxAlign);
+    AdjustStackOffset(MFI, array[i], StackGrowsDown, Offset, MaxAlign);
+    DEBUG(dbgs() << "Processing element " << array[i] 
+      << " size[" << MFI->getObjectSize(array[i]) << "]"
+      << " align[" << MFI->getObjectAlignment(array[i]) << "]"
+      << " offset[" << MFI->getObjectOffset(array[i]) << "]"
+      << " (array[" << i << "])\n");
   }
 
   // Make sure the special register scavenging spill slot is closest to the

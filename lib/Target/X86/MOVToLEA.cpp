@@ -26,9 +26,9 @@
 using namespace llvm;
 using namespace multicompiler::Random;
 
-STATISTIC(MOVCandidates, "multicompiler: Number of MOV candidates");
-STATISTIC(ReplacedMOV, "multicompiler: Number of substituted MOV instructions");
-STATISTIC(InstructionCount, "multicompiler: Number of instructions");
+STATISTIC(PreMOVtoLEAInstructionCount, "multicompiler: Pre-MOV to LEA instruction count");
+STATISTIC(MOVCandidates,               "multicompiler: Number of MOV candidates");
+STATISTIC(ReplacedMOV,                 "multicompiler: Number of substituted MOV instructions");
 
 namespace {
 class MOVToLEAPass : public MachineFunctionPass {
@@ -53,7 +53,7 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
   bool Changed = false;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-      ++InstructionCount;
+      ++PreMOVtoLEAInstructionCount;
       if (I->getNumOperands() != 2 ||
           !I->getOperand(0).isReg() || !I->getOperand(1).isReg()) {
         ++I;

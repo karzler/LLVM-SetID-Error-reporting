@@ -26,8 +26,16 @@
 using namespace llvm;
 using namespace multicompiler::Random;
 
-STATISTIC(InsertionOpportunities, "multicompiler: # of NOP insertion opportunities");
-STATISTIC(InsertedInstructions, "multicompiler: # of inserted instructions");
+/* If you rename this, be sure to update the text in projects/test-suite/TEST.multicompilerstats.report */
+STATISTIC(PreNOPInstructionCount,  "multicompiler: Pre-NOP insertion instruction count");
+STATISTIC(InsertedInstructions,    "multicompiler: Total number of inserted instructions");
+STATISTIC(NumNOPInstructions,      "multicompiler: Number of inserted NOP instructions");
+STATISTIC(NumMovEBPInstructions,   "multicompiler: Number of inserted MOV EBP, EBP instructions");
+STATISTIC(NumMovESPInstructions,   "multicompiler: Number of inserted MOV ESP, ESP instructions");
+STATISTIC(NumXchgEBPInstructions,  "multicompiler: Number of inserted XCHG EBP, EBP instructions");
+STATISTIC(NumXchgESPInstructions,  "multicompiler: Number of inserted XCHG ESP, ESP instructions");
+STATISTIC(NumLeaESIInstructions,   "multicompiler: Number of inserted LEA ESI, ESI instructions");
+STATISTIC(NumLeaEDIInstructions,   "multicompiler: Number of inserted LEA EDI, EDI instructions");
 
 namespace {
 class NOPInsertionPass : public MachineFunctionPass {
@@ -36,6 +44,7 @@ class NOPInsertionPass : public MachineFunctionPass {
 
   bool is64Bit;
 
+  void IncrementCounters(int const code);
 public:
   NOPInsertionPass(bool is64Bit_) :
       MachineFunctionPass(ID), is64Bit(is64Bit_) {}
@@ -64,17 +73,29 @@ static const unsigned nopRegs[MAX_NOPS][2] = {
     { X86::EDI, X86::RDI },
 };
 
+void NOPInsertionPass::IncrementCounters(int const code) {
+  ++InsertedInstructions;
+  switch(code) {
+  case NOP:      ++NumNOPInstructions; break;
+  case MOV_EBP:  ++NumMovEBPInstructions; break;
+  case MOV_ESP:  ++NumMovESPInstructions; break;
+  case LEA_ESI:  ++NumLeaESIInstructions; break;
+  case LEA_EDI:  ++NumLeaEDIInstructions; break;
+  case XCHG_EBP: ++NumXchgEBPInstructions; break;
+  case XCHG_ESP: ++NumXchgESPInstructions; break;
+  }
+}
+
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
-  for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
+  for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    PreNOPInstructionCount += BB->size();
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-      ++InsertionOpportunities;
       int NOPCode = AESRandomNumberGenerator::Generator().random() % MAX_NOPS;
       unsigned int Roll = AESRandomNumberGenerator::Generator().random() % 100;
       if (Roll >= multicompiler::NOPInsertionPercentage)
         continue;
 
-      ++InsertedInstructions;
       // TODO(ahomescu): figure out if we need to preserve kill information
       MachineInstr *NewMI = NULL;
       unsigned reg = nopRegs[NOPCode][!!is64Bit];
@@ -111,9 +132,11 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
       if (NewMI != NULL) {
         BB->insert(I, NewMI);
+        IncrementCounters(NOPCode);
       }
     }
-  //printf("Opportunities: %d Inserted: %d\n", multicompiler::NOPInsertionOpportunities, multicompiler::InsertedNOPCounter);
+  }
+
   return true;
 }
 

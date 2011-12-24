@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
     llvm_shutdown();
     return 1;
   }
-  uint32_t newAddr = PAGE_SIZE * AESRandomNumberGenerator::Generator().randnext(maxPage - minPage + 1);
+  uint32_t newAddr = PAGE_SIZE * (minPage + 
+    AESRandomNumberGenerator::Generator().randnext(maxPage - minPage + 1));
 
   char oldAddrStr[12];
   sprintf(oldAddrStr, "0x%08x", OldBaseAddress.getValue());

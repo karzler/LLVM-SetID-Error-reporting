@@ -1838,21 +1838,27 @@ static int checkSpecialNodes(const SUnit *left, const SUnit *right) {
   return 0;
 }
 
-<<<<<<<
 /// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
 /// Smaller number is the higher priority.
 static unsigned
 CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
-  unsigned &SethiUllmanNumber = SUNumbers[SU->NodeNum];
+  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
+
+  if (multicompiler::PreRARandomizerRange > 0) {
+    // TODO: figure out how to make this repeatable/deterministic
+    SethiUllmanNumber = 1 + multicompiler::Random::AESRandomNumberGenerator::Generator().random() %
+      multicompiler::PreRARandomizerRange;
+    return SethiUllmanNumber;
+  }
 
   unsigned Extra = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl()) continue;  // ignore chain preds
     SUnit *PredSU = I->getSUnit();
-    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU, SUNumbers);
+    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;
@@ -1864,80 +1870,18 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
 
   if (SethiUllmanNumber == 0)
     SethiUllmanNumber = 1;
-
+  
   return SethiUllmanNumber;
 }
 
-=======
-namespace {
-  template<class SF>
-  class RegReductionPriorityQueue : public SchedulingPriorityQueue {
->>>>>>>
-<<<<<<<
 /// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
-=======
-    /// class.
-    std::vector<unsigned> RegLimit;
-
-    //Rand48 Randomizer;
-
-  public:
-    RegReductionPriorityQueue(MachineFunction &mf,
-                              bool tracksrp,
->>>>>>>
-<<<<<<<
 /// scheduling units.
-=======
-                              const TargetRegisterInfo *tri,
-                              const TargetLowering *tli)
-      : Picker(this), CurQueueId(0), TracksRegPressure(tracksrp),
-        MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL)
-	//Randomizer(multicompiler::MultiCompilerSeed) 
-	{
-      if (TracksRegPressure) {
-        unsigned NumRC = TRI->getNumRegClasses();
-        RegLimit.resize(NumRC);
->>>>>>>
-<<<<<<<
 void RegReductionPQBase::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
-=======
-      unsigned SUSize = SethiUllmanNumbers.size();
-      if (SUnits->size() > SUSize)
-        SethiUllmanNumbers.resize(SUSize*2, 0);
-      CalcNodeSethiUllmanNumber(SU);
-    }
 
-    void updateNode(const SUnit *SU) {
-      SethiUllmanNumbers[SU->NodeNum] = 0;
-      CalcNodeSethiUllmanNumber(SU);
-    }
->>>>>>>
-
-<<<<<<<
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-=======
-        // computation.  Give it a large SethiUllman number so it will be
-        // scheduled right before its predecessors that it doesn't lengthen
-        // their live ranges.
-        return multicompiler::PreRARandomizerRange ?
-          (1 + multicompiler::PreRARandomizerRange) : 0xffff;
-      if (SU->NumPreds == 0 && SU->NumSuccs != 0)
-        // If SU does not have a register def, schedule it close to its uses
-        // because it does not lengthen any live ranges.
->>>>>>>
-<<<<<<<
     CalcNodeSethiUllmanNumber(&(*SUnits)[i], SethiUllmanNumbers);
 }
-=======
-    void AddPseudoTwoAddrDeps();
-    void PrescheduleNodesWithMultipleUses();
-    void CalculateSethiUllmanNumbers();
-    unsigned CalcNodeSethiUllmanNumber(const SUnit *SU);
-  };
-
-  typedef RegReductionPriorityQueue<bu_ls_rr_sort>
->>>>>>>
 
 void RegReductionPQBase::addNode(const SUnit *SU) {
   unsigned SUSize = SethiUllmanNumbers.size();
@@ -1972,7 +1916,8 @@ unsigned RegReductionPQBase::getNodePriority(const SUnit *SU) const {
     // computation.  Give it a large SethiUllman number so it will be
     // scheduled right before its predecessors that it doesn't lengthen
     // their live ranges.
-    return 0xffff;
+    return multicompiler::PreRARandomizerRange ?
+      (1 + multicompiler::PreRARandomizerRange) : 0xffff;
   if (SU->NumPreds == 0 && SU->NumSuccs != 0)
     // If SU does not have a register def, schedule it close to its uses
     // because it does not lengthen any live ranges.
@@ -3038,51 +2983,7 @@ void RegReductionPQBase::AddPseudoTwoAddrDeps() {
         }
       }
     }
-<<<<<<<
   }
-=======
-  SethiUllmanNumbers.assign(SUnits->size(), 0);
-  
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcNodeSethiUllmanNumber(&(*SUnits)[i]);
-}
-
-/// CalcNodeSethiUllmanNumber - Compute Sethi Ullman number.
-/// Smaller number is the higher priority.
-template<class SF>
-unsigned RegReductionPriorityQueue<SF>::
-CalcNodeSethiUllmanNumber(const SUnit *SU) {
-  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
-  if (SethiUllmanNumber != 0)
-    return SethiUllmanNumber;
-
-  if (multicompiler::PreRARandomizerRange > 0) {
-    // TODO: figure out how to make this repeatable/deterministic
-    SethiUllmanNumber = 1 + multicompiler::Random::AESRandomNumberGenerator::Generator().random() %
-      multicompiler::PreRARandomizerRange;
-    return SethiUllmanNumber;
-  }
-
-  unsigned Extra = 0;
-  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
-       I != E; ++I) {
-    if (I->isCtrl()) continue;  // ignore chain preds
-    SUnit *PredSU = I->getSUnit();
-    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
-    if (PredSethiUllman > SethiUllmanNumber) {
-      SethiUllmanNumber = PredSethiUllman;
-      Extra = 0;
-    } else if (PredSethiUllman == SethiUllmanNumber)
-      ++Extra;
-  }
-
-  SethiUllmanNumber += Extra;
-
-  if (SethiUllmanNumber == 0)
-    SethiUllmanNumber = 1;
-  
-  return SethiUllmanNumber;
->>>>>>>
 }
 
 //===----------------------------------------------------------------------===//

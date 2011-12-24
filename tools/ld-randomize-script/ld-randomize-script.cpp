@@ -34,6 +34,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/system_error.h"
 #include <iostream>
 #include <memory>
 using namespace llvm;

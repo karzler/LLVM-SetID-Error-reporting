@@ -35,7 +35,7 @@ static llvm::cl::opt<int, true>
 PreRARandomizerRangeOpt("pre-RA-randomizer-range",
                         llvm::cl::desc("Pre-RA instruction randomizer probability range; -1 for shuffle"),
                         llvm::cl::location(PreRARandomizerRange),
-                        llvm::cl::init(0xfff0));
+                        llvm::cl::init(0));
 
 static llvm::cl::opt<unsigned int, true>
 MaxStackFramePadOpt("max-stack-pad-size",
@@ -47,13 +47,13 @@ static llvm::cl::opt<unsigned int, true>
 NOPInsertionPercentageOpt("nop-insertion-percentage",
                           llvm::cl::desc("Percentage of instructions that have NOPs prepended"),
                           llvm::cl::location(NOPInsertionPercentage),
-                          llvm::cl::init(50));
+                          llvm::cl::init(0));
 
 static llvm::cl::opt<unsigned int, true>
 MOVToLeaPercentageOpt("mov-to-lea-percentage",
                       llvm::cl::desc("Percentage of MOVs that get changed to LEA"),
                       llvm::cl::location(MOVToLEAPercentage),
-                      llvm::cl::init(50));
+                      llvm::cl::init(0));
 
 static llvm::cl::opt<std::string, true>
 RNGStateFileOpt("rng-state-file",

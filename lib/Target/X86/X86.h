@@ -58,7 +58,7 @@ FunctionPass *createMOVToLEAPass();
 
 /// createNOPInsertionPass - This pass adds NOPs at random between
 /// instructions.
-FunctionPass *createNOPInsertionPass();
+FunctionPass *createNOPInsertionPass(bool is64Bit);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.

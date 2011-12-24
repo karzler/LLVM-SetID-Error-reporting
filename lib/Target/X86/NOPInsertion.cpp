@@ -34,8 +34,11 @@ class NOPInsertionPass : public MachineFunctionPass {
 
   static char ID;
 
+  bool is64Bit;
+
 public:
-  NOPInsertionPass() : MachineFunctionPass(ID) {}
+  NOPInsertionPass(bool is64Bit_) :
+      MachineFunctionPass(ID), is64Bit(is64Bit_) {}
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -72,7 +75,8 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       case MOV_EBP:
       case MOV_ESP: {
         unsigned reg = (NOPCode == MOV_EBP) ? X86::EBP : X86::ESP;
-        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::MOV32rr), reg)
+        unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
+        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
           .addReg(reg);
         break;
       }
@@ -80,7 +84,8 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       case XCHG_EBP:
       case XCHG_ESP: {
         unsigned reg = (NOPCode == XCHG_EBP) ? X86::EBP : X86::ESP;
-        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::XCHG32rr), reg)
+        unsigned opc = is64Bit ? X86::XCHG64rr : X86::XCHG32rr;
+        NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
           .addReg(reg).addReg(reg);
         break;
       }
@@ -88,8 +93,9 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       case LEA_ESI:
       case LEA_EDI: {
         unsigned reg = (NOPCode == LEA_ESI) ? X86::ESI : X86::EDI;
+        unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
         NewMI = addRegOffset(BuildMI(Fn, I->getDebugLoc(),
-                                     TII->get(X86::LEA32r), reg),
+                                     TII->get(opc), reg),
                              reg, false, 0);
         break;
       }
@@ -103,8 +109,8 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-FunctionPass *llvm::createNOPInsertionPass() {
-  return new NOPInsertionPass();
+FunctionPass *llvm::createNOPInsertionPass(bool is64Bit) {
+  return new NOPInsertionPass(is64Bit);
 }
 
 

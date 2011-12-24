@@ -228,7 +228,7 @@ bool X86PassConfig::addPreEmitPass() {
   // MOVToLEA might change the MOVs inserted as NOPs
   // into LEAs, which we don't want to happen
   PM.add(createMOVToLEAPass());
-  PM.add(createNOPInsertionPass());
+  PM.add(createNOPInsertionPass(Subtarget.is64Bit()));
   ShouldPrint = true;
 
   return ShouldPrint;

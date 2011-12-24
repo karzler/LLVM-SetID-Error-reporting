@@ -1767,6 +1767,18 @@ SUnit *popFromQueue(std::vector<SUnit*> &Q, SF &Picker, ScheduleDAG *DAG) {
 template<class SF>
 class RegReductionPriorityQueue : public RegReductionPQBase {
   SF Picker;
+ 
+  static SUnit *popRandom(std::vector<SUnit*> &Q) {
+    std::vector<SUnit *>::iterator Best = Q.begin();
+    multicompiler::Random::AESRandomNumberGenerator &randGen =
+      multicompiler::Random::AESRandomNumberGenerator::Generator();
+    size_t randIndex = randGen.randnext(Q.size());
+    SUnit *V = Q[randIndex];
+    if (randIndex < Q.size() - 1)
+      std::swap(Q[randIndex], Q.back());
+    Q.pop_back();
+    return V;
+  }
 
 public:
   RegReductionPriorityQueue(MachineFunction &mf,
@@ -1788,7 +1800,12 @@ public:
   SUnit *pop() {
     if (Queue.empty()) return NULL;
 
-    SUnit *V = popFromQueue(Queue, Picker, scheduleDAG);
+    SUnit *V;
+    if (multicompiler::PreRARandomizerRange == -1) {
+      V = popRandom(Queue);
+    } else {
+      V = popFromQueue(Queue, Picker, scheduleDAG);
+    }
     V->NodeQueueId = 0;
     return V;
   }

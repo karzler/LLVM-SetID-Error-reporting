@@ -12,7 +12,7 @@
 namespace multicompiler {
  extern unsigned int RandomStackLayout;
  extern unsigned int MultiCompilerSeed;
- extern unsigned int PreRARandomizerRange;
+ extern int PreRARandomizerRange;
  extern unsigned int MaxStackFramePadding;
  extern std::string RNGStateFile;
  extern unsigned int NOPInsertionPercentage;

@@ -12,7 +12,7 @@ namespace multicompiler {
 
 unsigned int RandomStackLayout;
 unsigned int MultiCompilerSeed;
-unsigned int PreRARandomizerRange;
+int PreRARandomizerRange;
 unsigned int MaxStackFramePadding; 
 std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
@@ -31,9 +31,9 @@ MultiCompilerOptionsOpt("multicompiler-seed",
                         llvm::cl::location(MultiCompilerSeed),
                         llvm::cl::init(0x87651234));
 
-static llvm::cl::opt<unsigned int, true>
+static llvm::cl::opt<int, true>
 PreRARandomizerRangeOpt("pre-RA-randomizer-range",
-                        llvm::cl::desc("Pre-RA instruction randomizer probability range"),
+                        llvm::cl::desc("Pre-RA instruction randomizer probability range; -1 for shuffle"),
                         llvm::cl::location(PreRARandomizerRange),
                         llvm::cl::init(0xfff0));
 

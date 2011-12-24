@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/IR/LLVMContext.h"
@@ -80,13 +81,13 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  MemoryBuffer *scriptFile = MemoryBuffer::getFile(scriptPath.c_str(), &errMsg);
-  if (scriptFile == NULL) {
-    errs() << "Error reading script file: " << errMsg;
+  OwningPtr< MemoryBuffer > scriptFile;
+  error_code ec = MemoryBuffer::getFile(scriptPath.c_str(), scriptFile);
+  if (ec) {
+    errs() << "Error reading script file: " << ec.message();
     llvm_shutdown();
     return 1;
   }
-
  
   uint32_t minPage = (MinBaseAddress + PAGE_SIZE - 1) / PAGE_SIZE,
            maxPage = MaxBaseAddress / PAGE_SIZE;

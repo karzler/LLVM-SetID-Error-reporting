@@ -1842,14 +1842,14 @@ static int checkSpecialNodes(const SUnit *left, const SUnit *right) {
 /// Smaller number is the higher priority.
 static unsigned
 CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
-  unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
+  unsigned &SethiUllmanNumber = SUNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
 
   if (multicompiler::PreRARandomizerRange > 0) {
     // TODO: figure out how to make this repeatable/deterministic
-    SethiUllmanNumber = 1 + multicompiler::Random::AESRandomNumberGenerator::Generator().random() %
-      multicompiler::PreRARandomizerRange;
+    SethiUllmanNumber = 1 + multicompiler::Random::AESRandomNumberGenerator::Generator().randnext(
+      multicompiler::PreRARandomizerRange);
     return SethiUllmanNumber;
   }
 
@@ -1858,7 +1858,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
        I != E; ++I) {
     if (I->isCtrl()) continue;  // ignore chain preds
     SUnit *PredSU = I->getSUnit();
-    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
+    unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU, SUNumbers);
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;

@@ -54,8 +54,18 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       ++InstructionCount;
-      if (I->getOpcode() != X86::MOV32rr || I->getNumOperands() != 2 ||
+      if (I->getNumOperands() != 2 ||
           !I->getOperand(0).isReg() || !I->getOperand(1).isReg()) {
+        ++I;
+        continue;
+      }
+
+      unsigned leaOpc;
+      if (I->getOpcode() == X86::MOV32rr) {
+        leaOpc = X86::LEA32r;
+      } else if (I->getOpcode() == X86::MOV64rr) {
+        leaOpc = X86::LEA64r;
+      } else {
         ++I;
         continue;
       }
@@ -71,7 +81,7 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
       MachineBasicBlock::iterator J = I;
       ++I;
       addRegOffset(BuildMI(*BB, J, J->getDebugLoc(),
-                           TII->get(X86::LEA32r), J->getOperand(0).getReg()),
+                           TII->get(leaOpc), J->getOperand(0).getReg()),
                    J->getOperand(1).getReg(), false, 0);
       J->eraseFromParent();
       Changed = true;

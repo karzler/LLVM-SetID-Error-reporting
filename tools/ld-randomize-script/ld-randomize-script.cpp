@@ -48,6 +48,9 @@ MinBaseAddress("min-base-address", cl::desc("minimum address of program base (in
 static cl::opt<uint32_t>
 MaxBaseAddress("max-base-address", cl::desc("maximum address of program base (inclusive)"),
                cl::init(0x09000000));
+static cl::opt<uint32_t>
+OldBaseAddress("old-base-address", cl::desc("old address of program base"),
+               cl::init(0x08048000));
 
 
 int main(int argc, char **argv) {
@@ -99,7 +102,10 @@ int main(int argc, char **argv) {
   }
   uint32_t newAddr = PAGE_SIZE * AESRandomNumberGenerator::Generator().randnext(maxPage - minPage + 1);
 
-  llvm::Regex oldAddrRegex("0x08048000");
+  char oldAddrStr[12];
+  sprintf(oldAddrStr, "0x%08x", OldBaseAddress.getValue());
+
+  llvm::Regex oldAddrRegex(oldAddrStr);
   StringRef scriptText = scriptFile->getBuffer();
   StringRef oldScriptText = scriptText;
   char newAddrStr[12];

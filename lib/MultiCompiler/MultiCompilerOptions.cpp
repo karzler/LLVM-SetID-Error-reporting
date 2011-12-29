@@ -19,6 +19,7 @@ unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
 unsigned int MOVToLEAPercentage;
 unsigned int RandomizeFunctionList;
+bool RandomizeRegisters;
 
 static llvm::cl::opt<unsigned int, true>
 RandomStackLayoutOpt("random-stack-layout",
@@ -73,4 +74,10 @@ RandomizeFunctionListOpt("randomize-function-list",
                        llvm::cl::desc("Permute the function list"),
                        llvm::cl::location(RandomizeFunctionList),
                        llvm::cl::init(0));
+
+static llvm::cl::opt<bool, true>
+RandomizeRegistersOpt("randomize-registers",
+                      llvm::cl::desc("randomize the order of registers in allocation"),
+                      llvm::cl::location(RandomizeRegisters),
+                      llvm::cl::init(false));
 }

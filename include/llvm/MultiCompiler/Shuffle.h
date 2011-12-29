@@ -10,12 +10,11 @@
      * method).  See http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
      */
     template<typename T>
-    void shuffle(T* array, unsigned length) {
-        int i;
-        uint32_t j;
-        for (i = length - 1; i > 0; i--) {
-            j = randnext(i);
-            swap(&array[j], &array[i]);
+    void shuffle(T* array, size_t length) {
+        for (size_t i = length - 1; i > 0; i--) {
+            size_t j = randnext(i + 1);
+            if (j < i)
+              std::swap(array[j], array[i]);
         }
     }
 

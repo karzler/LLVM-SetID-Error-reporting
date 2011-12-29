@@ -17,6 +17,8 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
@@ -41,6 +43,18 @@ public:
   const uint16_t RegSize, Alignment; // Size & Alignment of register in bytes
   const int8_t CopyCost;
   const bool Allocatable;
+  mutable bool RegsShuffled;
+public:
+  MCRegisterClass(unsigned id, const char *name,
+                  unsigned RS, unsigned Al, int CC, bool Allocable,
+                  iterator RB, iterator RE, const unsigned char *Bits,
+                  unsigned NumBytes)
+    : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
+      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE), RegSet(Bits),
+      RegSetSize(NumBytes), RegsShuffled(false) {
+    for (iterator i = RegsBegin; i != RegsEnd; ++i)
+       assert(contains(*i) && "Bit field corrupted.");
+  }
 
   /// getID() - Return the register class ID number.
   ///
@@ -52,8 +66,8 @@ public:
 
   /// begin/end - Return all of the registers in this class.
   ///
-  iterator       begin() const { return RegsBegin; }
-  iterator         end() const { return RegsBegin + RegsSize; }
+  iterator       begin() const { doShuffle(); return RegsBegin; }
+  iterator         end() const { doShuffle(); return RegsBegin + RegsSize; }
 
   /// getNumRegs - Return the number of registers in this class.
   ///
@@ -63,6 +77,7 @@ public:
   ///
   unsigned getRegister(unsigned i) const {
     assert(i < getNumRegs() && "Register number out of range!");
+    doShuffle();
     return RegsBegin[i];
   }
 
@@ -97,6 +112,17 @@ public:
   /// isAllocatable - Return true if this register class may be used to create
   /// virtual registers.
   bool isAllocatable() const { return Allocatable; }
+
+private:
+  void doShuffle() const {
+    if (!multicompiler::RandomizeRegisters || RegsShuffled)
+      return;
+
+    multicompiler::Random::AESRandomNumberGenerator &rand =
+      multicompiler::Random::AESRandomNumberGenerator::Generator();
+    rand.shuffle(const_cast<unsigned*>(RegsBegin), RegsEnd - RegsBegin);
+    RegsShuffled = true;
+  }
 };
 
 /// MCRegisterDesc - This record contains information about a particular

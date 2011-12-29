@@ -19,5 +19,6 @@ namespace multicompiler {
  extern unsigned int MaxNOPsPerInstruction;
  extern unsigned int MOVToLEAPercentage;
  extern unsigned int RandomizeFunctionList;
+ extern bool RandomizeRegisters;
 }
 #endif

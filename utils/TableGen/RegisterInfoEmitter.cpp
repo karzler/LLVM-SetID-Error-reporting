@@ -1151,7 +1151,16 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
             OS << " };\n";
           }
         }
-        OS << "  const MCRegisterClass &MCR = " << Target.getName()
+        OS << "  static bool ShuffledOrders = false;\n"
+           << "  if (multicompiler::RandomizeRegisters && !ShuffledOrders) {\n";
+        for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
+          OS << "    multicompiler::Random::AESRandomNumberGenerator"
+             << "::Generator().shuffle(AltOrder" << oi << ", "
+             << RC.getOrder(oi).size() << ");\n";
+        }
+        OS << "    ShuffledOrders = true;\n"
+           << "  }\n"
+           << "  const MCRegisterClass &MCR = " << Target.getName()
            << "MCRegisterClasses[" << RC.getQualifiedName() + "RegClassID];\n"
            << "  const ArrayRef<MCPhysReg> Order[] = {\n"
            << "    makeArrayRef(MCR.begin(), MCR.getNumRegs()";

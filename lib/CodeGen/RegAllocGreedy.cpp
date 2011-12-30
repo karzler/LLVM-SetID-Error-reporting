@@ -444,6 +444,10 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   if (!PhysReg || Order.isHint())
     return PhysReg;
 
+  // With randomization enabled, don't prioritize hints or low-cost registers.
+  if (multicompiler::RandomizeRegisters)
+    return PhysReg;
+
   // PhysReg is available, but there may be a better choice.
 
   // If we missed a simple hint, try to cheaply evict interference from the

@@ -34,6 +34,11 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   const TargetRegisterInfo *TRI = &VRM.getTargetRegInfo();
   Order = RegClassInfo.getOrder(MF.getRegInfo().getRegClass(VirtReg));
   TRI->getRegAllocationHints(VirtReg, Order, Hints, MF, &VRM);
+
+  // Ignore hints when randomization is enabled.
+  if (multicompiler::RandomizeRegisters)
+    Hints.clear();
+    
   rewind();
 
   DEBUG({

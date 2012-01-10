@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include "llvm/MultiCompiler/AESCounterModeRNG.h"
+#include "llvm/MultiCompiler/SkeinPBKDF2.h"
 
 static const int INVALID_KEY_LENGTH = -0x0800;
 static const int INVALID_INPUT_LENGTH = -0x0810;
@@ -397,6 +398,40 @@ void aesrng_initialize_to_empty(aesrng_context** ctx)
 {
     (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
     memset(*ctx, 0x00, sizeof(aesrng_context));
+}
+
+void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int const keylen, uint8_t const* password, unsigned int passwordlen, uint64_t salt)
+{
+    (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
+    unsigned int length = 16 /* plaintext */ + 2 * sizeof(uint64_t) /* nonce,  counter */;
+    switch(keylen){
+    case 16:
+    case 20:
+    case 24:
+        length += keylen;
+        break;
+    default:
+        printf("Invalid keylength! Defaulting to 16\n");
+    }
+
+    printf("Salt: %llu\n", salt);
+    uint8_t *randomdata = pbkdf2(password, passwordlen, (uint8_t*)&salt, sizeof(uint64_t), 10000, length);
+    unsigned int i;
+    for(i = 0; i < length; i++){
+        printf("%02x", randomdata[i]);
+    }
+    printf("\n");
+
+    (*ctx)->keylength = keylen;
+    (*ctx)->reseed_counter = 0;
+    (*ctx)->key = (uint8_t*)malloc((*ctx)->keylength * sizeof(uint8_t));
+    memcpy((*ctx)->key, randomdata, keylen);
+    memcpy((*ctx)->nonce, randomdata + keylen, sizeof(uint64_t));
+    memcpy(&((*ctx)->counter), randomdata + keylen + 8, sizeof(uint64_t));
+    memcpy((*ctx)->plaintext, randomdata + keylen + 2 * sizeof(uint64_t), 16);
+
+    aes_setkey_enc(*ctx);
+    delete[] randomdata;
 }
 
 void aesrng_destroy(aesrng_context* ctx)

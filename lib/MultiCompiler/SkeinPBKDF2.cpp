@@ -22,14 +22,16 @@
 #include <string.h>
 
 #include "llvm/MultiCompiler/Skein.h"
+#include "llvm/MultiCompiler/SkeinPBKDF2.h"
 
-#define SKEIN_512_BITLENGTH 512
+const unsigned int SKEIN_512_512_BITLENGTH = 512;
+const unsigned int SKEIN_512_512_BYTELENGTH = 64;
 
 void F(const uint8_t * const password, const unsigned int passwordlen, const uint8_t * const salt, const unsigned int saltlen,
         const unsigned int iterations, const uint32_t index, uint8_t * const output){
     unsigned int i, j;
-    uint8_t *prevblock = new uint8_t[SKEIN_512_BITLENGTH / 8];
-    uint8_t *outputblock = new uint8_t[SKEIN_512_BITLENGTH / 8];
+    uint8_t *prevblock = new uint8_t[SKEIN_512_512_BYTELENGTH];
+    uint8_t *outputblock = new uint8_t[SKEIN_512_512_BYTELENGTH];
     Skein_512_Ctxt_t ctx;
 
     /* First round
@@ -37,39 +39,82 @@ void F(const uint8_t * const password, const unsigned int passwordlen, const uin
      * RFC 2898 says that iterations is a 4 byte encoding */
     unsigned int inputlen = passwordlen + saltlen + sizeof(index);
     uint8_t* input = new uint8_t[inputlen];
+    memset(input, 0x00, inputlen);
     memcpy(input, password, passwordlen);
     memcpy(input + passwordlen, salt, saltlen);
-    memcpy(input + passwordlen + saltlen, &iterations, sizeof(index));
+    memcpy(input + passwordlen + saltlen, &index, sizeof(index));
 
-    Skein_512_Init(&ctx, 512);
+    //input[0] = 0xff;
+    //inputlen = 1;
+
+    /* Init and Do Skein 512-512 */
+    Skein_512_Init(&ctx, SKEIN_512_512_BITLENGTH);
     Skein_512_Update(&ctx, input, inputlen);
     Skein_512_Final(&ctx, prevblock);
+    printf("Iteration 1\n");
+    for(i = 0; i < SKEIN_512_512_BYTELENGTH; i++){
+        printf("%02x", prevblock[i]);
+    }
+    printf("\n");
 
-    memcpy(outputblock, prevblock, 512 / 8);
+    memcpy(outputblock, prevblock, SKEIN_512_512_BYTELENGTH);
+    printf("outputblock = ");
+    for(i = 0; i < SKEIN_512_512_BYTELENGTH; i++){
+        printf("%02x", outputblock[i]);
+    }
+    printf("\n");
 
-    uint8_t *tempdata = new uint8_t[512 / 8];
+    /* Done with input...for now. Will use a new one inside the loop */
+    delete[] input;
+
+    uint8_t *tempdata = new uint8_t[SKEIN_512_512_BYTELENGTH];
     for(i = 0; i < iterations; i++){
-        /* PRF(P, U_1) = PRF(P, prev_block) */
-        inputlen = passwordlen + 512 / 8;
-        memcpy(input, password, passwordlen);
-        memcpy(input + passwordlen, prevblock, 512 / 8);
+        /* New input, new length. Resize input */
+        inputlen = saltlen + SKEIN_512_512_BYTELENGTH;
+        input = new uint8_t[inputlen];
+        memset(input, 0x00, inputlen);
 
-        Skein_512_Init(&ctx, 512);
+        /* PRF(P, U_1) = PRF(P, prev_block) */
+        memcpy(input, salt, saltlen);
+        memcpy(input + saltlen, prevblock, SKEIN_512_512_BYTELENGTH);
+        printf("input = ");
+        for(j = 0; j < inputlen; j++){
+            printf("%02x", input[j]);
+        }
+        printf("\n");
+
+        memset(&ctx, 0x00, sizeof(Skein_512_Ctxt_t));
+        Skein_512_Init(&ctx, SKEIN_512_512_BITLENGTH);
         Skein_512_Update(&ctx, input, inputlen);
         Skein_512_Final(&ctx, tempdata);
+        printf("tempdata = ");
+        for(j = 0; j < SKEIN_512_512_BYTELENGTH; j++){
+            printf("%02x", tempdata[j]);
+        }
+        printf("\n");
 
         /* XOR */
-        for(j = 0; j < SKEIN_512_BITLENGTH / 8; j++){
+        for(j = 0; j < SKEIN_512_512_BYTELENGTH; j++){
             outputblock[j] ^= tempdata[j];
         }
 
         /* Save the previous block */
-        memcpy(prevblock, tempdata, 512 / 8);
-    }
-    delete[] tempdata;
-    delete[] input;
+        memcpy(prevblock, tempdata, SKEIN_512_512_BYTELENGTH);
 
-    memcpy(output, outputblock, SKEIN_512_BITLENGTH / 8);
+        /* Destroy input -- will recreate on next loop */
+        delete[] input;
+    }
+
+    memcpy(output, outputblock, SKEIN_512_512_BYTELENGTH);
+    printf("output = ");
+    for(i = 0; i < SKEIN_512_512_BYTELENGTH; i++){
+        printf("%02x", output[i]);
+    }
+    printf("\n");
+
+    delete[] prevblock;
+    delete[] tempdata;
+    delete[] outputblock;
 }
 
 /**
@@ -84,15 +129,15 @@ void F(const uint8_t * const password, const unsigned int passwordlen, const uin
  */
 uint8_t *pbkdf2(uint8_t const *password, const unsigned int pLen, uint8_t const *salt, const unsigned int sLen,
         const unsigned int iterations, const unsigned int dkLen) {
-    unsigned int hLen = 512 / 8; /* Assume Skein 512-512 -- length of output in bytes */
+    const unsigned int hLen = SKEIN_512_512_BYTELENGTH; /* Assume Skein 512-512 -- length of output in bytes */
     if(dkLen > (UINT32_MAX - 1) * hLen) {
         printf("Desired derived key too long\n");
         return NULL;
     }
     unsigned int i;
 
-    /* Number of Skein blocks */
-    const unsigned int l = ceil(dkLen / hLen);
+    /* Number of PRF blocks */
+    const unsigned int l = ceil((float)dkLen / hLen);
 
     /* Number of bytes that get copied from a remainder block */
     const unsigned int r = dkLen - (l - 1) * hLen;
@@ -100,19 +145,23 @@ uint8_t *pbkdf2(uint8_t const *password, const unsigned int pLen, uint8_t const 
     uint8_t *output = new uint8_t[dkLen];
     uint8_t *h_block = new uint8_t[hLen];
 
-    /* Generate l blocks */
-    for(i = 0; i < l; i++){
+    /* Generate l - 1 blocks */
+    for(i = 0; i < l - 1; i++){
+        printf("Block %d\n", i);
         F(password, pLen, salt, sLen, iterations, i + 1, h_block);
         memcpy(output + (hLen * i), h_block, hLen);
     }
 
-    /* Generate remainder block - if necessary */
-    if(r > 0){
-        F(password, pLen, salt, sLen, iterations, l, h_block);
-    }
+    printf("Block %d\n", l);
+    F(password, pLen, salt, sLen, iterations, l, h_block);
 
     /* Copy r bytes out of the remainder block */
-    memcpy(output + (hLen * l), h_block, r);
+    if(r > 0){
+        memcpy(output + (hLen * (l - 1)), h_block, r);
+    }
+    else{
+        memcpy(output + (hLen * (l - 1)), h_block, hLen);
+    }
 
     delete[] h_block;
     return output;

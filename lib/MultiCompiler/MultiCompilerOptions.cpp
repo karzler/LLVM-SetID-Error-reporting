@@ -11,7 +11,7 @@
 namespace multicompiler {
 
 unsigned int RandomStackLayout;
-unsigned int MultiCompilerSeed;
+uint64_t MultiCompilerSeed;
 int PreRARandomizerRange;
 unsigned int MaxStackFramePadding;
 std::string RNGStateFile;
@@ -27,7 +27,7 @@ RandomStackLayoutOpt("random-stack-layout",
                      llvm::cl::location(RandomStackLayout),
                      llvm::cl::init(0));
 
-static llvm::cl::opt<unsigned int, true>
+static llvm::cl::opt<uint64_t, true>
 MultiCompilerOptionsOpt("multicompiler-seed",
                         llvm::cl::desc("RNG seed for multicompiler"),
                         llvm::cl::location(MultiCompilerSeed),

@@ -55,14 +55,28 @@ namespace Random
 
 AESRandomNumberGenerator::AESRandomNumberGenerator( ) : Random()
 {
-    DEBUG(errs() << "Initialising AES RNG context\n");
-    aesrng_initialize_to_default(&ctx);
-    readStateFile();
+    DEBUG(errs() << "Initializing AES RNG context to");
+    aesrng_initialize_to_empty(&ctx);
+    if(multicompiler::RNGStateFile != ""){
+        DEBUG(errs() << " file\n");
+        readStateFile();
+    }
+    else{
+        DEBUG(errs() << " empty");
+    }
+}
+
+void AESRandomNumberGenerator::Reseed(uint64_t salt, uint8_t const* password, unsigned int length)
+{
+    DEBUG(errs() << "Re-Seeding AES RNG context from salt and password\n");
+    DEBUG(errs() << "Salt: " << salt << "\n");
+    aesrng_destroy(ctx);
+    aesrng_initialize_with_random_data(&ctx, 16, password, length, salt);
 }
 
 AESRandomNumberGenerator::AESRandomNumberGenerator(AESRandomNumberGenerator const& a) : Random()
 {
-    DEBUG(errs() << "Initialising AES RNG context 2\n");
+    DEBUG(errs() << "Initialising AES RNG context from copy constructor\n");
     aesrng_initialize_to_empty(&ctx);
     memcpy(&ctx, &a.ctx, sizeof(aesrng_context));
     ctx->key = new uint8_t[a.ctx->keylength];
@@ -71,7 +85,9 @@ AESRandomNumberGenerator::AESRandomNumberGenerator(AESRandomNumberGenerator cons
 
 AESRandomNumberGenerator::~AESRandomNumberGenerator()
 {
-    writeStateFile();
+    if(multicompiler::RNGStateFile != ""){
+        writeStateFile();
+    }
     aesrng_destroy(ctx);
 }
 

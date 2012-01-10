@@ -37,6 +37,8 @@ public:
     uint64_t random();
     uint64_t randnext(uint64_t max);
 
+    void Reseed(uint64_t salt, uint8_t const* password, unsigned int length);
+
     static AESRandomNumberGenerator& Generator() {
         static AESRandomNumberGenerator instance;
         return instance;

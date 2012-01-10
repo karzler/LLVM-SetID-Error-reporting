@@ -7,11 +7,12 @@
 
 #ifndef MULTI_COMPILER_OPTIONS_H
 #define MULTI_COMPILER_OPTIONS_H
+#include <stdint.h>
 #include <string>
 
 namespace multicompiler {
  extern unsigned int RandomStackLayout;
- extern unsigned int MultiCompilerSeed;
+ extern uint64_t MultiCompilerSeed;
  extern int PreRARandomizerRange;
  extern unsigned int MaxStackFramePadding;
  extern std::string RNGStateFile;

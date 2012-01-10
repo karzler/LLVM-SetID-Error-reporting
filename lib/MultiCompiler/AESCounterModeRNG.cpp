@@ -400,17 +400,19 @@ void aesrng_initialize_to_empty(aesrng_context** ctx)
     memset(*ctx, 0x00, sizeof(aesrng_context));
 }
 
-void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int keylen, uint8_t const* password, unsigned int passwordlen, uint64_t salt)
+void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int keylen,
+        uint8_t const* password, unsigned int passwordlen, uint64_t salt)
 {
     (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
-    unsigned int length = 16 /* plaintext */ + 2 * sizeof(uint64_t) /* nonce,  counter */;
+    unsigned int length = 16 /* plaintext */ + 2 * sizeof(uint64_t) /* nonce, counter */;
     if(keylen != 16 && keylen != 20 && keylen != 24){
         printf("Invalid keylength! Defaulting to 16\n");
         keylen = 16;
     }
     length += keylen;
 
-    uint8_t *randomdata = pbkdf2(password, passwordlen, (uint8_t*)&salt, sizeof(uint64_t), 10000, length);
+    uint8_t *randomdata = skein_pbkdf2(password, passwordlen, (uint8_t*)&salt,
+            sizeof(uint64_t), DEFAULT_KDF_ITERATIONS, length);
     unsigned int i;
 
     (*ctx)->keylength = keylen;

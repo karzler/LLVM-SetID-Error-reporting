@@ -27,7 +27,7 @@
 const unsigned int SKEIN_512_512_BITLENGTH = 512;
 const unsigned int SKEIN_512_512_BYTELENGTH = 64;
 
-void F(const uint8_t * const password, const unsigned int passwordlen, const uint8_t * const salt, const unsigned int saltlen,
+void skein_pbkdf2_F(const uint8_t * const password, const unsigned int passwordlen, const uint8_t * const salt, const unsigned int saltlen,
         const unsigned int iterations, const uint32_t index, uint8_t * const output){
     unsigned int i, j;
     uint8_t *prevblock = new uint8_t[SKEIN_512_512_BYTELENGTH];
@@ -93,7 +93,7 @@ void F(const uint8_t * const password, const unsigned int passwordlen, const uin
 }
 
 /**
- * Driver function for PBKDF2.
+ * Driver function for Skein-based PBKDF2.
  *
  * password - Password data
  * pLen - Length of password in bytes
@@ -102,7 +102,7 @@ void F(const uint8_t * const password, const unsigned int passwordlen, const uin
  * iterations - Iteration count, a positive integer
  * dkLen - Desired output length in bytes
  */
-uint8_t *pbkdf2(uint8_t const *password, const unsigned int pLen, uint8_t const *salt, const unsigned int sLen,
+uint8_t *skein_pbkdf2(uint8_t const *password, const unsigned int pLen, uint8_t const *salt, const unsigned int sLen,
         const unsigned int iterations, const unsigned int dkLen) {
     const unsigned int hLen = SKEIN_512_512_BYTELENGTH; /* Assume Skein 512-512 -- length of output in bytes */
     if(dkLen > (UINT32_MAX - 1) * hLen) {
@@ -122,11 +122,11 @@ uint8_t *pbkdf2(uint8_t const *password, const unsigned int pLen, uint8_t const 
 
     /* Generate l - 1 blocks */
     for(i = 0; i < l - 1; i++){
-        F(password, pLen, salt, sLen, iterations, i + 1, h_block);
+        skein_pbkdf2_F(password, pLen, salt, sLen, iterations, i + 1, h_block);
         memcpy(output + (hLen * i), h_block, hLen);
     }
 
-    F(password, pLen, salt, sLen, iterations, l, h_block);
+    skein_pbkdf2_F(password, pLen, salt, sLen, iterations, l, h_block);
 
     /* Copy r bytes out of the remainder block */
     if(r > 0){

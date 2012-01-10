@@ -54,7 +54,8 @@ typedef struct {
 void aesrng_initialize(aesrng_context** ctx, uint64_t counter, uint16_t keylength);
 void aesrng_initialize_to_empty(aesrng_context** ctx);
 void aesrng_initialize_to_default(aesrng_context** ctx);
-void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int const keylen, uint8_t const* password, unsigned int passwordlen, uint64_t salt);
+void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int keylen,
+        uint8_t const* password, unsigned int passwordlen, uint64_t salt);
 void aesrng_destroy(aesrng_context* ctx);
 
 void aesrng_restore_state(aesrng_context* ctx, const char* filename);

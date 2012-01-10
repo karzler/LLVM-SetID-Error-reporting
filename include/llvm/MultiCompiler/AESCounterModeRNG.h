@@ -6,20 +6,29 @@
  *
  * Designed for use in C projects.  Based on reference implementation of AES.
  *
- * Interface technically allows for multiple RNGs to be instantiated at once 
+ * Interface technically allows for multiple RNGs to be instantiated at once
  * by passing aesrng_context object to the functions.  This is by design.
  *
  * -- Todd Jackson, University of California, Irvine
- * 
+ *
  * 15 November 2011: Initial drop
+ * 15 December 2011: Clean up compiler warnings
  */
 
-#include <inttypes.h>
-
 #ifdef __cplusplus
+/* This isn't always defined on some systems, and it's C++ specific */
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
 extern "C" {
 #endif
 
+#include <stdint.h>
+
+static const uint64_t RESEED_INTERVAL = 1UL << 48;
+static const uint8_t MAX_BITS_PER_REQUEST = 19;
+
+#include <stdint.h>
 /**
  * AES context structure, but extended to act a RNG state
  */
@@ -29,6 +38,8 @@ typedef struct {
     uint16_t keylength;
     uint8_t *key;
     uint8_t plaintext[16];
+    uint64_t reseed_counter;
+    uint16_t bits_per_request;
 
     int nr;                /* number of rounds  */
     uint32_t *rk;          /* AES round keys    */

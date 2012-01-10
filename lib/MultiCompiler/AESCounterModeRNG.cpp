@@ -28,10 +28,11 @@
  *  http://csrc.nist.gov/encryption/aes/rijndael/Rijndael.pdf
  *  http://csrc.nist.gov/publications/fips/fips197/fips-197.pdf
  */
-/* 
+/*
  * Modified to act as random number generator by Todd Jackson
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -375,6 +376,7 @@ void aesrng_initialize_to_default(aesrng_context** ctx)
     (*ctx)->keylength = 16;
     (*ctx)->key = (uint8_t*)malloc((*ctx)->keylength * sizeof(uint8_t));
     (*ctx)->counter = 0;
+    (*ctx)->reseed_counter = 0;
     memcpy((*ctx)->key, default_key, (*ctx)->keylength * sizeof(uint8_t));
     memcpy((*ctx)->nonce, default_testvector, 8 * sizeof(uint8_t));
     memcpy(&((*ctx)->counter), default_testvector + 8, sizeof(uint64_t));
@@ -387,6 +389,7 @@ void aesrng_initialize(aesrng_context** ctx, uint64_t counter, uint16_t keylengt
 {
     (*ctx) = (aesrng_context*)malloc(sizeof(aesrng_context));
     (*ctx)->counter = counter;
+    (*ctx)->reseed_counter = 0;
     (*ctx)->keylength = keylength;
 }
 
@@ -412,26 +415,33 @@ void aesrng_restore_state(aesrng_context* ctx, const char* filename)
     }
 
     int fhandle = open(filename, O_RDONLY);
+    int bytes_read = 0;
 
     /* uint16_t: keysize */
-    read(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
+    bytes_read += read(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
 
     /* Create key, now that we know how big it is */
-    ctx->key = (uint8_t *)malloc(ctx->keylength * sizeof(uint8_t)); 
+    ctx->key = (uint8_t *)malloc(ctx->keylength * sizeof(uint8_t));
 
     /* keylength * uint8_t: key */
-    read(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
+    bytes_read += read(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
 
     /* 16 * uint8_t: plaintext */
-    read(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
+    bytes_read += read(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
 
     /* 8 * uint8_t: nonce */
-    read(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
+    bytes_read += read(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
 
     /* uint64_t: counter */
-    read(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
+    bytes_read += read(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
 
+    if (bytes_read != s.st_size) {
+        // We didn't read the whole file
+        printf("Warning: Did not read the entire state file!\n");
+    }
     ctx->rk = ctx->buf;
+
+    ctx->reseed_counter = 0;
 
     /* Global AES init */
     if(aes_init_done == 0) {
@@ -449,11 +459,12 @@ void aesrng_write_state(aesrng_context* ctx, const char* filename)
     if (filename == NULL) return;
 
     int fhandle = open(filename, O_WRONLY);
-    write(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
-    write(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
-    write(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
-    write(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
-    write(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
+    int byte_count = 0;
+    byte_count += write(fhandle, (char *)&(ctx->keylength), sizeof(uint16_t));
+    byte_count += write(fhandle, (char *)(ctx->key), ctx->keylength * sizeof(uint8_t));
+    byte_count += write(fhandle, (char *)(ctx->plaintext), 16 * sizeof(uint8_t));
+    byte_count += write(fhandle, (char *)(ctx->nonce), 8 * sizeof(uint8_t));
+    byte_count += write(fhandle, (char *)&(ctx->counter), sizeof(uint64_t));
 }
 
 void aesrng_random_u128(aesrng_context* ctx, uint128_t* val)
@@ -471,6 +482,11 @@ void aesrng_random_u128(aesrng_context* ctx, uint128_t* val)
 
     /* Counter increment */
     incrementBigEndianUInt64((uint8_t *)&(ctx->counter));
+    ctx->reseed_counter++;
+
+    if(ctx->reseed_counter == RESEED_INTERVAL){
+        printf("Warning: Reseeding required");
+    }
 }
 
 uint64_t aesrng_random_u64(aesrng_context* ctx)

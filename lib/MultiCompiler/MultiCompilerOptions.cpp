@@ -31,7 +31,7 @@ static llvm::cl::opt<unsigned int, true>
 MultiCompilerOptionsOpt("multicompiler-seed",
                         llvm::cl::desc("RNG seed for multicompiler"),
                         llvm::cl::location(MultiCompilerSeed),
-                        llvm::cl::init(0x87651234));
+                        llvm::cl::init(0));
 
 static llvm::cl::opt<int, true>
 PreRARandomizerRangeOpt("pre-RA-randomizer-range",

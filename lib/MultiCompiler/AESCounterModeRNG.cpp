@@ -41,6 +41,7 @@
 #include <unistd.h>
 
 #include "llvm/MultiCompiler/AESCounterModeRNG.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/MultiCompiler/SkeinPBKDF2.h"
 
 static const int INVALID_KEY_LENGTH = -0x0800;
@@ -413,7 +414,6 @@ void aesrng_initialize_with_random_data(aesrng_context** ctx, unsigned int keyle
 
     uint8_t *randomdata = skein_pbkdf2(password, passwordlen, (uint8_t*)&salt,
             sizeof(uint64_t), DEFAULT_KDF_ITERATIONS, length);
-    unsigned int i;
 
     (*ctx)->keylength = keylen;
     (*ctx)->reseed_counter = 0;
@@ -513,7 +513,14 @@ void aesrng_random_u128(aesrng_context* ctx, uint128_t* val)
     ctx->reseed_counter++;
 
     if(ctx->reseed_counter == RESEED_INTERVAL){
-        printf("Warning: Reseeding required");
+        printf("Warning: Reseeding required...");
+        memcpy(input, (char *)ctx->nonce, sizeof(uint64_t));
+        memcpy(input + 8, (char *)&(ctx->counter), sizeof(uint64_t));
+        aes_crypt_ecb(ctx, input, output);
+        for(i = 0; i < 16; i++) output[i] ^= ctx->plaintext[i];
+
+        printf("Reseeding...\n");
+        aesrng_initialize_with_random_data(&ctx, ctx->keylength, output, 16, multicompiler::MultiCompilerSeed);
     }
 }
 

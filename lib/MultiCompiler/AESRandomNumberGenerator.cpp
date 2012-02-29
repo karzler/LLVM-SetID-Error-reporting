@@ -39,10 +39,14 @@
 #include "llvm/MultiCompiler/AESCounterModeRNG.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fstream>
+#include <errno.h>
+
+extern int errno;
 
 using namespace llvm;
 
@@ -55,15 +59,33 @@ namespace Random
 
 AESRandomNumberGenerator::AESRandomNumberGenerator( ) : Random()
 {
-    DEBUG(errs() << "Initializing AES RNG context to");
-    aesrng_initialize_to_empty(&ctx);
-    if(multicompiler::RNGStateFile != ""){
-        DEBUG(errs() << " file\n");
+    DEBUG(errs() << "AES RNG: Initializing context ");
+    if(!MultiCompilerSeed.empty() && !EntropyData.empty()){
+        DEBUG(errs() << " with command line seed and entropy data\n");
+
+        // TODO(tmjackso): Replace checks with a proper assert
+        Seed = strtoul(MultiCompilerSeed.c_str(), NULL, 10);
+        if(errno == ERANGE || errno == EINVAL){
+            llvm::report_fatal_error("MultiCompilerSeed is out of range!");
+        }
+        // Seed properly
+        aesrng_initialize_with_random_data(&ctx, 16,
+                reinterpret_cast<const uint8_t*>(EntropyData.c_str()),
+                EntropyData.length(), Seed);
+    }
+    else if(multicompiler::RNGStateFile != ""){
+        // Fall back on state file...if provided.
+        DEBUG(errs() << " with file\n");
+        aesrng_initialize_to_empty(&ctx);
         readStateFile();
     }
     else{
-        DEBUG(errs() << " empty");
+        DEBUG(errs() << " to default\n");
+        DEBUG(errs() << "Warning! Using unseeded random number generator\n");
+        aesrng_initialize_to_default(&ctx);
+
     }
+    errs().flush();
 }
 
 void AESRandomNumberGenerator::Reseed(uint64_t salt, uint8_t const* password, unsigned int length)

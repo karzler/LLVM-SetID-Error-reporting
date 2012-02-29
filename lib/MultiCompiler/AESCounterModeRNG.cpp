@@ -42,6 +42,7 @@
 
 #include "llvm/MultiCompiler/AESCounterModeRNG.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
+#include "llvm/MultiCompiler/Random.h"
 #include "llvm/MultiCompiler/SkeinPBKDF2.h"
 
 static const int INVALID_KEY_LENGTH = -0x0800;
@@ -520,7 +521,8 @@ void aesrng_random_u128(aesrng_context* ctx, uint128_t* val)
         for(i = 0; i < 16; i++) output[i] ^= ctx->plaintext[i];
 
         printf("Reseeding...\n");
-        aesrng_initialize_with_random_data(&ctx, ctx->keylength, output, 16, multicompiler::MultiCompilerSeed);
+        //TODO(tmjackso): Assert that Seed is actually defined.
+        aesrng_initialize_with_random_data(&ctx, ctx->keylength, output, 16, multicompiler::Random::Seed);
     }
 }
 

@@ -1,8 +1,12 @@
-
-// MultiCompilerOptions.c
-//
-//  Created on: Dec 17, 2010
-//      Author: kmanivan
+/*===--- MultiCompilerOptions.cpp - Multicompiler Options -----
+*
+*
+*  This file implements the Multi Compiler Options interface.
+*
+*  Author: kmanivan
+*  Date: Dec 17, 2010
+*
+*===----------------------------------------------------------------------===*/
 
 #include <string>
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
@@ -11,7 +15,7 @@
 namespace multicompiler {
 
 unsigned int RandomStackLayout;
-uint64_t MultiCompilerSeed;
+std::string MultiCompilerSeed;
 int PreRARandomizerRange;
 unsigned int MaxStackFramePadding;
 std::string RNGStateFile;
@@ -27,11 +31,11 @@ RandomStackLayoutOpt("random-stack-layout",
                      llvm::cl::location(RandomStackLayout),
                      llvm::cl::init(0));
 
-static llvm::cl::opt<uint64_t, true>
+static llvm::cl::opt<std::string, true>
 MultiCompilerOptionsOpt("multicompiler-seed",
                         llvm::cl::desc("RNG seed for multicompiler"),
                         llvm::cl::location(MultiCompilerSeed),
-                        llvm::cl::init(0));
+                        llvm::cl::init(""));
 
 static llvm::cl::opt<int, true>
 PreRARandomizerRangeOpt("pre-RA-randomizer-range",
@@ -65,9 +69,9 @@ MOVToLeaPercentageOpt("mov-to-lea-percentage",
 
 static llvm::cl::opt<std::string, true>
 RNGStateFileOpt("rng-state-file",
-                        llvm::cl::desc("Location of the rng state file"),
-			llvm::cl::location(RNGStateFile),
-			llvm::cl::init(std::string("")));
+                llvm::cl::desc("Location of the rng state file"),
+                llvm::cl::location(RNGStateFile),
+                llvm::cl::init(std::string("")));
 
 static llvm::cl::opt<unsigned int, true>
 RandomizeFunctionListOpt("randomize-function-list",

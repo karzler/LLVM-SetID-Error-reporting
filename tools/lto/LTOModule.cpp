@@ -27,6 +27,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MultiCompiler/Random.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -36,6 +37,8 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include <cstdio>
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -205,6 +208,7 @@ LTOModule *LTOModule::makeLTOModule(const char *path, std::string &errMsg) {
     errMsg = ec.message();
     return NULL;
   }
+  multicompiler::Random::EntropyData.append(path);
   return makeLTOModule(buffer.take(), errMsg);
 }
 
@@ -224,6 +228,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
     errMsg = ec.message();
     return NULL;
   }
+  multicompiler::Random::EntropyData.append(path);
   return makeLTOModule(buffer.take(), errMsg);
 }
 

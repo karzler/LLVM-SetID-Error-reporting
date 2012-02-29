@@ -28,6 +28,8 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -46,6 +48,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
 using namespace llvm;
+using namespace multicompiler::Random;
 
 static cl::opt<bool>
 DisableOpt("disable-opt", cl::init(false),
@@ -366,7 +369,20 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   Module* mergedModule = _linker.getModule();
 
-  // Mark which symbols can not be internalized
+  // if options were requested, set them
+  if ( !_codegenOptions.empty() )
+    cl::ParseCommandLineOptions(_codegenOptions.size(),
+                                const_cast<char **>(&_codegenOptions[0]));
+
+  // Permute the function list
+  // While we *can* change the order of passes, I'd first like to look at
+  // simply permuting the order in which functions are processed.
+  if (multicompiler::RandomizeFunctionList) {
+      printf("Shuffling functions...\n");
+      AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
+  }
+
+  // mark which symbols can not be internalized
   this->applyScopeRestrictions();
 
   // Instantiate the pass manager to organize the passes.
@@ -410,6 +426,11 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Run our queue of passes all at once now, efficiently.
   passes.run(*mergedModule);
+
+  if (multicompiler::RandomizeFunctionList) {
+      printf("Shuffling functions...\n");
+      AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
+  }
 
   // Run the code generator, and write assembly file
   codeGenPasses.run(*mergedModule);

@@ -26,31 +26,89 @@
 
 const unsigned int SKEIN_512_512_BITLENGTH = 512;
 const unsigned int SKEIN_512_512_BYTELENGTH = 64;
+const unsigned int SKEIN_512_512_BLOCKSIZE = 64;
 
-void skein_pbkdf2_F(const uint8_t * const password, const unsigned int passwordlen, const uint8_t * const salt, const unsigned int saltlen,
-        const unsigned int iterations, const uint32_t index, uint8_t * const output){
+void skein_hash(const uint8_t * const data, const unsigned int length,
+        uint8_t * const output) {
+    Skein_512_Ctxt_t ctx;
+    Skein_512_Init(&ctx, SKEIN_512_512_BITLENGTH);
+    Skein_512_Update(&ctx, data, length);
+    Skein_512_Final(&ctx, output);
+}
+
+void skein_hmac(const uint8_t * const password,
+        const unsigned int passwordlen, const uint8_t * const salt,
+        const unsigned int saltlen, uint8_t * const output) {
+
+    uint8_t key[SKEIN_512_512_BLOCKSIZE];
+    unsigned int keylength = passwordlen;
+
+    // Shrink password to block size if necessary by hashing
+    if(passwordlen > SKEIN_512_512_BLOCKSIZE){
+        skein_hash(password, passwordlen, key);
+        keylength = SKEIN_512_512_BYTELENGTH;
+    }
+
+    // Stretch password to block size if necessary by zero padding
+    if(passwordlen < SKEIN_512_512_BLOCKSIZE){
+        memset(key, 0x00, SKEIN_512_512_BLOCKSIZE);
+        memcpy(key, password, passwordlen);
+        keylength = SKEIN_512_512_BLOCKSIZE;
+    }
+
+    uint8_t o_key_pad[SKEIN_512_512_BLOCKSIZE];
+    uint8_t i_key_pad[SKEIN_512_512_BLOCKSIZE];
+
+    for(unsigned int i = 0; i < keylength; i++){
+        o_key_pad[i] = 0x5c ^ key[i];
+        i_key_pad[i] = 0x36 ^ key[i];
+    }
+
+    // Compute inner hash
+    // hash(i_key_pad || message) == hash(i_key_pad || salt)
+    // according to PBKDF2 spec
+    uint8_t *inner_hash = new uint8_t[saltlen + SKEIN_512_512_BLOCKSIZE];
+    memcpy(inner_hash, i_key_pad, SKEIN_512_512_BLOCKSIZE);
+    memcpy(inner_hash + SKEIN_512_512_BLOCKSIZE, salt, saltlen);
+
+    uint8_t outputblock[SKEIN_512_512_BYTELENGTH];
+    skein_hash(inner_hash, saltlen + SKEIN_512_512_BLOCKSIZE, outputblock);
+
+    // Compute outer hash
+    // hash(o_key_pad || hash(i_key_pad || message))
+    uint8_t outer_hash[SKEIN_512_512_BYTELENGTH + SKEIN_512_512_BLOCKSIZE];
+    memcpy(outer_hash, o_key_pad, SKEIN_512_512_BLOCKSIZE);
+    memcpy(outer_hash + SKEIN_512_512_BLOCKSIZE, outputblock,
+            SKEIN_512_512_BLOCKSIZE);
+
+    skein_hash(outer_hash, SKEIN_512_512_BYTELENGTH +
+            SKEIN_512_512_BLOCKSIZE, output);
+
+    delete[] inner_hash;
+}
+
+void skein_pbkdf2_F(const uint8_t * const password,
+        const unsigned int passwordlen, const uint8_t * const salt,
+        const unsigned int saltlen, const unsigned int iterations,
+        const uint32_t index, uint8_t * const output){
     unsigned int i, j;
     uint8_t *prevblock = new uint8_t[SKEIN_512_512_BYTELENGTH];
     uint8_t *outputblock = new uint8_t[SKEIN_512_512_BYTELENGTH];
-    Skein_512_Ctxt_t ctx;
 
     /* First round
      * U_1 = PRF(password, salt || UINT32(index)
      * RFC 2898 says that iterations is a 4 byte encoding */
-    unsigned int inputlen = passwordlen + saltlen + sizeof(index);
+    unsigned int inputlen = saltlen + sizeof(index);
     uint8_t* input = new uint8_t[inputlen];
     memset(input, 0x00, inputlen);
-    memcpy(input, password, passwordlen);
-    memcpy(input + passwordlen, salt, saltlen);
-    memcpy(input + passwordlen + saltlen, &index, sizeof(index));
+    memcpy(input, salt, saltlen);
+    memcpy(input + saltlen, &index, sizeof(index));
 
     //input[0] = 0xff;
     //inputlen = 1;
 
-    /* Init and Do Skein 512-512 */
-    Skein_512_Init(&ctx, SKEIN_512_512_BITLENGTH);
-    Skein_512_Update(&ctx, input, inputlen);
-    Skein_512_Final(&ctx, prevblock);
+    /* Init and Do HMAC-Skein-512-512 */
+    skein_hmac(password, passwordlen, input, inputlen, prevblock);
 
     memcpy(outputblock, prevblock, SKEIN_512_512_BYTELENGTH);
 
@@ -59,19 +117,9 @@ void skein_pbkdf2_F(const uint8_t * const password, const unsigned int passwordl
 
     uint8_t *tempdata = new uint8_t[SKEIN_512_512_BYTELENGTH];
     for(i = 0; i < iterations; i++){
-        /* New input, new length. Resize input */
-        inputlen = saltlen + SKEIN_512_512_BYTELENGTH;
-        input = new uint8_t[inputlen];
-        memset(input, 0x00, inputlen);
-
-        /* PRF(P, U_1) = PRF(P, prev_block) */
-        memcpy(input, salt, saltlen);
-        memcpy(input + saltlen, prevblock, SKEIN_512_512_BYTELENGTH);
-
-        memset(&ctx, 0x00, sizeof(Skein_512_Ctxt_t));
-        Skein_512_Init(&ctx, SKEIN_512_512_BITLENGTH);
-        Skein_512_Update(&ctx, input, inputlen);
-        Skein_512_Final(&ctx, tempdata);
+        /* PRF(P, U_[i-1]) */
+        skein_hmac(password, passwordlen, prevblock,
+                SKEIN_512_512_BYTELENGTH, tempdata);
 
         /* XOR */
         for(j = 0; j < SKEIN_512_512_BYTELENGTH; j++){
@@ -80,9 +128,6 @@ void skein_pbkdf2_F(const uint8_t * const password, const unsigned int passwordl
 
         /* Save the previous block */
         memcpy(prevblock, tempdata, SKEIN_512_512_BYTELENGTH);
-
-        /* Destroy input -- will recreate on next loop */
-        delete[] input;
     }
 
     memcpy(output, outputblock, SKEIN_512_512_BYTELENGTH);

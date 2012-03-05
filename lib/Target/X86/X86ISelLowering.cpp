@@ -43,6 +43,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -51,6 +52,8 @@
 #include <bitset>
 #include <cctype>
 using namespace llvm;
+
+#include <iostream>
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
@@ -1358,7 +1361,7 @@ void X86TargetLowering::resetOperationActions() {
   // Predictable cmov don't hurt on atom because it's in-order.
   PredictableSelectIsExpensive = !Subtarget->isAtom();
 
-  setPrefFunctionAlignment(4); // 2^4 bytes.
+  setPrefFunctionAlignment(multicompiler::FunctionAlignment);
 }
 
 EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {

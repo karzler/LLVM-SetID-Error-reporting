@@ -23,6 +23,7 @@ unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
 unsigned int MOVToLEAPercentage;
 unsigned int RandomizeFunctionList;
+unsigned int FunctionAlignment;
 bool RandomizeRegisters;
 
 static llvm::cl::opt<unsigned int, true>
@@ -79,6 +80,12 @@ RandomizeFunctionListOpt("randomize-function-list",
                        llvm::cl::location(RandomizeFunctionList),
                        llvm::cl::init(0));
 
+static llvm::cl::opt<unsigned int, true>
+FunctionAlignmentOpt("align-functions",
+                     llvm::cl::desc("Specify alignment of functions as log2(align)"),
+                     llvm::cl::location(FunctionAlignment),
+                     llvm::cl::init(4));
+ 
 static llvm::cl::opt<bool, true>
 RandomizeRegistersOpt("randomize-registers",
                       llvm::cl::desc("randomize the order of registers in allocation"),

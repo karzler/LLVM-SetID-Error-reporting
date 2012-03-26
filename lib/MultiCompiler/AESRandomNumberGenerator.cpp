@@ -64,6 +64,7 @@ AESRandomNumberGenerator::AESRandomNumberGenerator( ) : Random()
         DEBUG(errs() << " with command line seed and entropy data\n");
 
         // TODO(tmjackso): Replace checks with a proper assert
+        errno = 0;
         Seed = strtoul(MultiCompilerSeed.c_str(), NULL, 10);
         if(errno == ERANGE || errno == EINVAL){
             llvm::report_fatal_error("MultiCompilerSeed is out of range!");

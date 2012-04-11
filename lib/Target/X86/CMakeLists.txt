@@ -15,6 +15,7 @@ add_public_tablegen_target(X86CommonTableGen)
 set(sources
   NOPInsertion.cpp
   MOVToLEA.cpp
+  EquivSubst.cpp
   X86AsmPrinter.cpp
   X86COFFMachineModuleInfo.cpp
   X86CodeEmitter.cpp

@@ -22,6 +22,7 @@ std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
 unsigned int MOVToLEAPercentage;
+unsigned int EquivSubstPercentage;
 unsigned int RandomizeFunctionList;
 unsigned int FunctionAlignment;
 bool RandomizeRegisters;
@@ -66,6 +67,12 @@ static llvm::cl::opt<unsigned int, true>
 MOVToLeaPercentageOpt("mov-to-lea-percentage",
                       llvm::cl::desc("Percentage of MOVs that get changed to LEA"),
                       llvm::cl::location(MOVToLEAPercentage),
+                      llvm::cl::init(0));
+
+static llvm::cl::opt<unsigned int, true>
+EquivSubstPercentageOpt("equiv-subst-percentage",
+                      llvm::cl::desc("Percentage of instructions which get equivalent-substituted"),
+                      llvm::cl::location(EquivSubstPercentage),
                       llvm::cl::init(0));
 
 static llvm::cl::opt<std::string, true>

@@ -56,6 +56,10 @@ FunctionPass *createX86IssueVZeroUpperPass();
 /// to equivalent LEA instructions.
 FunctionPass *createMOVToLEAPass();
 
+/// createEquivSubstPass - This pass substitutes some instructions with
+/// equivalent ones.
+FunctionPass *createEquivSubstPass();
+
 /// createNOPInsertionPass - This pass adds NOPs at random between
 /// instructions.
 FunctionPass *createNOPInsertionPass(bool is64Bit);

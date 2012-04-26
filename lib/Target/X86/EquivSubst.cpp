@@ -26,9 +26,9 @@
 using namespace llvm;
 using namespace multicompiler::Random;
 
-//STATISTIC(PreMOVtoLEAInstructionCount, "multicompiler: Pre-MOV to LEA instruction count");
-//STATISTIC(MOVCandidates,               "multicompiler: Number of MOV candidates");
-//STATISTIC(ReplacedMOV,                 "multicompiler: Number of substituted MOV instructions");
+STATISTIC(PreEquivSubstInstructionCount, "multicompiler: Pre-equivalent substitution instruction count");
+STATISTIC(EquivSubstCandidates,          "multicompiler: Number of equivalent substitution candidates");
+STATISTIC(EquivSubstituted,              "multicompiler: Number of substituted equivalent instructions");
 
 namespace {
 
@@ -184,6 +184,7 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
   std::vector<const EquivInsnFilter*> Candidates;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
+      ++PreEquivSubstInstructionCount;
       Candidates.clear();
       for (size_t i = 0; i < array_lengthof(Filters); i++)
         if (Filters[i]->check(*BB, *I))
@@ -194,6 +195,7 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
       }
 
       unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      ++EquivSubstCandidates;
       if (Roll >= multicompiler::EquivSubstPercentage) {
         ++I;
         continue;
@@ -204,6 +206,7 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
       ++I;
       Candidates[Pick]->subst(*BB, TII, J);
       Changed = true;
+      ++EquivSubstituted;
     }
   return Changed;
 }

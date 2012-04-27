@@ -25,7 +25,7 @@ extern "C" {
 
 #include <stdint.h>
 
-static const uint64_t RESEED_INTERVAL = 1UL << 48;
+static const uint64_t RESEED_INTERVAL = 1ULL << 48;
 static const uint8_t MAX_BITS_PER_REQUEST = 19;
 static const unsigned int DEFAULT_KDF_ITERATIONS = 10000;
 

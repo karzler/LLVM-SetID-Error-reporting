@@ -1822,7 +1822,9 @@ public:
     if (multicompiler::PreRARandomizerRange == -2) {
       V = popWorst(Queue, Picker);
     } else {
-      unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      multicompiler::Random::AESRandomNumberGenerator &randGen =
+        multicompiler::Random::AESRandomNumberGenerator::Generator();
+      unsigned int Roll = randGen.randnext(100);
       if (Roll < multicompiler::ISchedRandPercentage) {
         V = popRandom(Queue);
       } else {

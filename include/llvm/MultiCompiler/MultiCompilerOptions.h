@@ -23,5 +23,6 @@ namespace multicompiler {
  extern unsigned int RandomizeFunctionList;
  extern unsigned int FunctionAlignment;
  extern bool RandomizeRegisters;
+ extern unsigned int ISchedRandPercentage;
 }
 #endif

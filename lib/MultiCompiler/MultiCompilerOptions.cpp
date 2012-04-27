@@ -26,6 +26,7 @@ unsigned int EquivSubstPercentage;
 unsigned int RandomizeFunctionList;
 unsigned int FunctionAlignment;
 bool RandomizeRegisters;
+unsigned int ISchedRandPercentage;
 
 static llvm::cl::opt<unsigned int, true>
 RandomStackLayoutOpt("random-stack-layout",
@@ -95,7 +96,14 @@ FunctionAlignmentOpt("align-functions",
  
 static llvm::cl::opt<bool, true>
 RandomizeRegistersOpt("randomize-registers",
-                      llvm::cl::desc("randomize the order of registers in allocation"),
+                      llvm::cl::desc("Randomize the order of registers in allocation"),
                       llvm::cl::location(RandomizeRegisters),
                       llvm::cl::init(false));
+
+static llvm::cl::opt<unsigned int, true>
+ISchedRandPercentageOpt("nop-insertion-percentage",
+                        llvm::cl::desc("Percentage of instructions where schedule is randomized"),
+                        llvm::cl::location(ISchedRandPercentage),
+                        llvm::cl::init(0));
+
 }

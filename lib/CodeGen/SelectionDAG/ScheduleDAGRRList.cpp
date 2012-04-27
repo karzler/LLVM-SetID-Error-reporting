@@ -1819,12 +1819,15 @@ public:
     if (Queue.empty()) return NULL;
 
     SUnit *V;
-    if (multicompiler::PreRARandomizerRange == -1) {
-      V = popRandom(Queue);
-    } else if (multicompiler::PreRARandomizerRange == -2) {
+    if (multicompiler::PreRARandomizerRange == -2) {
       V = popWorst(Queue, Picker);
     } else {
-      V = popFromQueue(Queue, Picker, scheduleDAG);
+      unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      if (Roll < multicompiler::ISchedRandPercentage) {
+        V = popRandom(Queue);
+      } else {
+        V = popFromQueue(Queue, Picker, scheduleDAG);
+      }
     }
     V->NodeQueueId = 0;
     return V;

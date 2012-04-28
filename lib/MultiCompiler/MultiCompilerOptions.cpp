@@ -101,7 +101,7 @@ RandomizeRegistersOpt("randomize-registers",
                       llvm::cl::init(false));
 
 static llvm::cl::opt<unsigned int, true>
-ISchedRandPercentageOpt("nop-insertion-percentage",
+ISchedRandPercentageOpt("isched-rand-percentage",
                         llvm::cl::desc("Percentage of instructions where schedule is randomized"),
                         llvm::cl::location(ISchedRandPercentage),
                         llvm::cl::init(0));

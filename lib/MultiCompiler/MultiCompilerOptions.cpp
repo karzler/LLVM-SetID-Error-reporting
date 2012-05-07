@@ -27,6 +27,7 @@ unsigned int RandomizeFunctionList;
 unsigned int FunctionAlignment;
 bool RandomizeRegisters;
 unsigned int ISchedRandPercentage;
+bool ProfiledNOPInsertion;
 
 static llvm::cl::opt<unsigned int, true>
 RandomStackLayoutOpt("random-stack-layout",
@@ -105,5 +106,11 @@ ISchedRandPercentageOpt("isched-rand-percentage",
                         llvm::cl::desc("Percentage of instructions where schedule is randomized"),
                         llvm::cl::location(ISchedRandPercentage),
                         llvm::cl::init(0));
+
+static llvm::cl::opt<bool, true>
+ProfiledNOPInsertionOpt("profiled-nop-insertion",
+                        llvm::cl::desc("Use profile information in NOP insertion"),
+                        llvm::cl::location(ProfiledNOPInsertion),
+                        llvm::cl::init(false));
 
 }

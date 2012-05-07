@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "nop-insertion"
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -45,7 +46,8 @@ class NOPInsertionPass : public MachineFunctionPass {
   void IncrementCounters(int const code);
 public:
   NOPInsertionPass(bool is64Bit_) :
-      MachineFunctionPass(ID), is64Bit(is64Bit_) {}
+      MachineFunctionPass(ID), is64Bit(is64Bit_) {
+  }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
@@ -53,6 +55,10 @@ public:
     return "NOP insertion pass";
   }
 
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesCFG();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
 };
 }
 
@@ -82,6 +88,7 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {

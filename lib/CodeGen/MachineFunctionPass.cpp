@@ -13,6 +13,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/Passes.h"
@@ -51,6 +52,8 @@ void MachineFunctionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved("domfrontier");
   AU.addPreserved("loops");
   AU.addPreserved("lda");
+  // FIXME(ahomescu): works???
+  AU.addPreserved<ProfileInfo>();
 
   FunctionPass::getAnalysisUsage(AU);
 }

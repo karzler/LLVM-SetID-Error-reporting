@@ -14,15 +14,15 @@
 #include "X86TargetMachine.h"
 #include "X86.h"
 #include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/PassManager.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Instrumentation.h"
 using namespace llvm;
 
 extern "C" void LLVMInitializeX86Target() {
@@ -230,9 +230,6 @@ bool X86PassConfig::addPreEmitPass() {
   // as they interfere with each other
   // MOVToLEA might change the MOVs inserted as NOPs
   // into LEAs, which we don't want to happen
-  if (multicompiler::ProfiledNOPInsertion) {
-    PM.add(createProfileLoaderPass(""));
-  }
   PM.add(createMOVToLEAPass());
   PM.add(createEquivSubstPass());
   PM.add(createNOPInsertionPass(Subtarget.is64Bit()));

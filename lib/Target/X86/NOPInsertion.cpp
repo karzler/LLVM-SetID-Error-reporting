@@ -15,8 +15,10 @@
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
 #include "llvm/Analysis/ProfileInfo.h"
+#include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/Allocator.h"
@@ -57,6 +59,9 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
+    if (multicompiler::ProfiledNOPInsertion == 2) {
+      AU.addRequired<ProfileInfo>();
+    }
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };

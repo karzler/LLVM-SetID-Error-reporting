@@ -44,17 +44,6 @@ public:
   const int8_t CopyCost;
   const bool Allocatable;
   mutable bool RegsShuffled;
-public:
-  MCRegisterClass(unsigned id, const char *name,
-                  unsigned RS, unsigned Al, int CC, bool Allocable,
-                  iterator RB, iterator RE, const unsigned char *Bits,
-                  unsigned NumBytes)
-    : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
-      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE), RegSet(Bits),
-      RegSetSize(NumBytes), RegsShuffled(false) {
-    for (iterator i = RegsBegin; i != RegsEnd; ++i)
-       assert(contains(*i) && "Bit field corrupted.");
-  }
 
   /// getID() - Return the register class ID number.
   ///
@@ -120,7 +109,7 @@ private:
 
     multicompiler::Random::AESRandomNumberGenerator &rand =
       multicompiler::Random::AESRandomNumberGenerator::Generator();
-    rand.shuffle(const_cast<unsigned*>(RegsBegin), RegsEnd - RegsBegin);
+    rand.shuffle(const_cast<unsigned short*>(RegsBegin), RegsSize);
     RegsShuffled = true;
   }
 };

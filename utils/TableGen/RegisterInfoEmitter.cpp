@@ -1145,7 +1145,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
           ArrayRef<Record*> Elems = RC.getOrder(oi);
           if (!Elems.empty()) {
-            OS << "  static const MCPhysReg AltOrder" << oi << "[] = {";
+            OS << "  static MCPhysReg AltOrder" << oi << "[] = {";
             for (unsigned elem = 0; elem != Elems.size(); ++elem)
               OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
             OS << " };\n";

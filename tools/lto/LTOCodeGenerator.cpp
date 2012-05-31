@@ -378,7 +378,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // While we *can* change the order of passes, I'd first like to look at
   // simply permuting the order in which functions are processed.
   if (multicompiler::RandomizeFunctionList) {
-      printf("Shuffling functions...\n");
+      //printf("Shuffling functions...\n");
       AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
   }
 
@@ -428,7 +428,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.run(*mergedModule);
 
   if (multicompiler::RandomizeFunctionList) {
-      printf("Shuffling functions...\n");
+      //printf("Shuffling functions...\n");
       AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
   }
 

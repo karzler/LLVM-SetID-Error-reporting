@@ -169,7 +169,6 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
-<<<<<<< HEAD
   iterator B = begin(), E = end(), I = E;
   /*
    * FIXME(ahomescu): this doesn't work with NOP insertion

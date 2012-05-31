@@ -65,7 +65,6 @@ add_llvm_library(LLVMCodeGen
   MachineTraceMetrics.cpp
   MachineVerifier.cpp
   MultiCompilerOptions.cpp
-  ObjectCodeEmitter.cpp
   OcamlGC.cpp
   OptimizePHIs.cpp
   PHIElimination.cpp

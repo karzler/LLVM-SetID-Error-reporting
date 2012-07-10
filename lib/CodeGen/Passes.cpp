@@ -12,20 +12,24 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
@@ -425,6 +429,13 @@ void TargetPassConfig::addISelPrepare() {
   addPass(createStackProtectorPass(getTargetLowering()));
 
   addPreISel();
+
+  // If we have profiled NOP insertion, add the passes here.
+  if (multicompiler::ProfiledNOPInsertion == 1) {
+    PM->add(createOptimalEdgeProfilerPass());
+  } else if (multicompiler::ProfiledNOPInsertion == 2) {
+    PM->add(createProfileLoaderPass(""));
+  }
 
   if (PrintISelInput)
     addPass(createPrintFunctionPass("\n\n"

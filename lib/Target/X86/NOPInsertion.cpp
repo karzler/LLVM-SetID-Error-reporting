@@ -26,6 +26,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 
+#include <cstdio>
+
 using namespace llvm;
 using namespace multicompiler::Random;
 
@@ -94,8 +96,15 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
+  if (PI) {
+    PI->repair(Fn.getFunction());
+  }
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
+    if (PI) {
+      printf("BB(%p,%p)=%.8lf\n", &*BB, BB->getBasicBlock(),
+             PI->getExecutionCount(BB->getBasicBlock()));
+    }
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);

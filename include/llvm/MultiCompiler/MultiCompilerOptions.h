@@ -25,5 +25,7 @@ namespace multicompiler {
  extern bool RandomizeRegisters;
  extern unsigned int ISchedRandPercentage;
  extern unsigned int ProfiledNOPInsertion;
+ extern unsigned int NOPInsertionRange;
+ extern bool NOPInsertionUseLog;
 }
 #endif

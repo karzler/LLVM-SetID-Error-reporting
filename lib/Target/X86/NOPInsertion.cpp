@@ -96,19 +96,35 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
+  double MaxCount = 0.0;
   if (PI) {
     PI->repair(Fn.getFunction());
+    for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end();
+         BB != E; ++BB) {
+      MaxCount = std::max(MaxCount, PI->getExecutionCount(BB->getBasicBlock()));
+    }
   }
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
-    if (PI) {
-      printf("BB(%p,%p)=%.8lf\n", &*BB, BB->getBasicBlock(),
-             PI->getExecutionCount(BB->getBasicBlock()));
+    unsigned int BBProb = multicompiler::NOPInsertionPercentage;
+    if (multicompiler::ProfiledNOPInsertion == 2 && PI && MaxCount > 0.0) {
+      // TODO: add the log function
+      double w = PI->getExecutionCount(BB->getBasicBlock());
+      if (w != ProfileInfo::MissingValue) {
+        double alpha;
+        if (multicompiler::NOPInsertionUseLog) {
+          alpha = log(1.0 + w) / log(1.0 + MaxCount);
+        } else {
+          alpha = w / MaxCount;
+        }
+        BBProb -= (int)(alpha * multicompiler::NOPInsertionRange);
+        printf("BB:%p w:%lf alpha:%lf Prob:%d\n", &*BB, w, alpha, BBProb);
+      }
     }
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
-        if (Roll >= multicompiler::NOPInsertionPercentage)
+        if (Roll >= BBProb)
           continue;
 
         int NOPCode = AESRandomNumberGenerator::Generator().randnext(MAX_NOPS);

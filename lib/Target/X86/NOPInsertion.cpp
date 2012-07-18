@@ -97,7 +97,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
   double MaxCount = 0.0;
-  if (PI) {
+  if (multicompiler::ProfiledNOPInsertion == 2 && PI) {
     PI->repair(Fn.getFunction());
     for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end();
          BB != E; ++BB) {

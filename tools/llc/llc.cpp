@@ -23,6 +23,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
+#include "llvm/MultiCompiler/ProfiledNOPInsertion.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
@@ -339,6 +341,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     else
       Target.setMCRelaxAll(true);
   }
+
+  multicompiler::addProfiledNOPInsertionPasses(PM);
 
   {
     formatted_raw_ostream FOS(Out->os());

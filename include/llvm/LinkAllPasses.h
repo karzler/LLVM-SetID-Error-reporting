@@ -29,6 +29,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/MultiCompiler/ProfiledNOPInsertion.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/ObjCARC.h"
@@ -163,6 +164,8 @@ namespace {
       (void) llvm::createLoopVectorizePass();
       (void) llvm::createSLPVectorizerPass();
       (void) llvm::createBBVectorizePass();
+
+      (void) multicompiler::createProfiledNOPInsertionPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();

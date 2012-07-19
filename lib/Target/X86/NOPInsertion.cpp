@@ -14,17 +14,16 @@
 #define DEBUG_TYPE "nop-insertion"
 #include "X86InstrBuilder.h"
 #include "X86InstrInfo.h"
-#include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/ADT/Statistic.h"
 
 #include <cstdio>
 
@@ -61,9 +60,6 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
-    if (multicompiler::ProfiledNOPInsertion == 2) {
-      AU.addRequired<ProfileInfo>();
-    }
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
@@ -95,32 +91,9 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
-  ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
-  double MaxCount = 0.0;
-  if (multicompiler::ProfiledNOPInsertion == 2 && PI) {
-    PI->repair(Fn.getFunction());
-    for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end();
-         BB != E; ++BB) {
-      MaxCount = std::max(MaxCount, PI->getExecutionCount(BB->getBasicBlock()));
-    }
-  }
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
-    unsigned int BBProb = multicompiler::NOPInsertionPercentage;
-    if (multicompiler::ProfiledNOPInsertion == 2 && PI && MaxCount > 0.0) {
-      // TODO: add the log function
-      double w = PI->getExecutionCount(BB->getBasicBlock());
-      if (w != ProfileInfo::MissingValue) {
-        double alpha;
-        if (multicompiler::NOPInsertionUseLog) {
-          alpha = log(1.0 + w) / log(1.0 + MaxCount);
-        } else {
-          alpha = w / MaxCount;
-        }
-        BBProb -= (int)(alpha * multicompiler::NOPInsertionRange);
-        printf("BB:%p w:%lf alpha:%lf Prob:%d\n", &*BB, w, alpha, BBProb);
-      }
-    }
+    unsigned int BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);

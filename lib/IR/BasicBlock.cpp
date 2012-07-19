@@ -19,6 +19,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/LeakDetector.h"
 #include <algorithm>
@@ -41,7 +42,8 @@ template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
 
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
-  : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0) {
+  : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0),
+    NOPInsertionPercentage(multicompiler::NOPInsertionPercentage) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);

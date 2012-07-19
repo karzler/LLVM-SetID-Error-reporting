@@ -78,6 +78,8 @@ private:
   InstListType InstList;
   Function *Parent;
 
+  unsigned NOPInsertionPercentage;
+
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
 
@@ -280,6 +282,13 @@ public:
   /// \brief Return the landingpad instruction associated with the landing pad.
   LandingPadInst *getLandingPadInst();
   const LandingPadInst *getLandingPadInst() const;
+
+  unsigned getNOPInsertionPercentage() const {
+    return NOPInsertionPercentage;
+  }
+  void setNOPInsertionPercentage(unsigned NIP) {
+    NOPInsertionPercentage = NIP;
+  }
 
 private:
   /// \brief Increment the internal refcount of the number of BlockAddresses

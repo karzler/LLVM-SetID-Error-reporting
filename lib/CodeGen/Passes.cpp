@@ -430,14 +430,6 @@ void TargetPassConfig::addISelPrepare() {
 
   addPreISel();
 
-  // If we have profiled NOP insertion, add the passes here.
-  if (multicompiler::ProfiledNOPInsertion == 1) {
-    PM->add(createProfileEstimatorPass());
-    PM->add(createOptimalEdgeProfilerPass());
-  } else if (multicompiler::ProfiledNOPInsertion == 2) {
-    PM->add(createProfileLoaderPass(""));
-  }
-
   if (PrintISelInput)
     addPass(createPrintFunctionPass("\n\n"
                                     "*** Final LLVM Code input to ISel ***\n",

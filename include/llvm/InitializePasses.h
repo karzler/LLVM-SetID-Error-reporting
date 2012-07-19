@@ -219,6 +219,7 @@ void initializePrintBasicBlockPassPass(PassRegistry&);
 void initializeProcessImplicitDefsPass(PassRegistry&);
 void initializeProfileEstimatorPassPass(PassRegistry&);
 void initializeProfileInfoAnalysisGroup(PassRegistry&);
+void initializeProfiledNOPInsertionPass(PassRegistry&);
 void initializePathProfileInfoAnalysisGroup(PassRegistry&);
 void initializePathProfileVerifierPass(PassRegistry&);
 void initializeProfileVerifierPassPass(PassRegistry&);

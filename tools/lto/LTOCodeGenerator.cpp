@@ -30,6 +30,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
+#include "llvm/MultiCompiler/ProfiledNOPInsertion.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -403,6 +404,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
                                               /*Internalize=*/false,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
+
+  multicompiler::addProfiledNOPInsertionPasses(passes);
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());

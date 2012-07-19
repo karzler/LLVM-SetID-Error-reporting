@@ -94,6 +94,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
     unsigned int BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
+    //printf("BB(%p):%d\n", &*BB, BBProb);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);

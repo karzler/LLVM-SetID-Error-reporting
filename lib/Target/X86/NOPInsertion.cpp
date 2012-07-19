@@ -93,7 +93,13 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
-    unsigned int BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
+    unsigned int BBProb = multicompiler::NOPInsertionPercentage;
+    if (BB->getBasicBlock()) {
+      BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
+    }
+    if (BBProb <= 0)
+      continue;
+
     //printf("BB(%p):%d\n", &*BB, BBProb);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {

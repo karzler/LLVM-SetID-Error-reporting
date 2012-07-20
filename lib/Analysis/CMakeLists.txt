@@ -38,13 +38,14 @@ add_llvm_library(LLVMAnalysis
   PathProfileInfo.cpp
   PathProfileVerifier.cpp
   PostDominators.cpp
+  ProfileDataLoader.cpp
+  ProfileDataLoaderPass.cpp
   ProfileEstimatorPass.cpp
   ProfileInfo.cpp
   ProfileInfoLoader.cpp
   ProfileInfoLoaderPass.cpp
   ProfileVerifierPass.cpp
-  ProfileDataLoader.cpp
-  ProfileDataLoaderPass.cpp
+  ProfiledNOPInsertion.cpp
   PtrUseVisitor.cpp
   RegionInfo.cpp
   RegionPass.cpp

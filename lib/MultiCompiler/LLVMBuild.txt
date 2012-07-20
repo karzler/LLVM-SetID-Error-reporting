@@ -19,4 +19,3 @@
 type = Library
 name = MultiCompiler
 parent = Libraries
-required_libraries = Analysis Support Transforms

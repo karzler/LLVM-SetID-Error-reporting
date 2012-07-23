@@ -75,9 +75,13 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
         } else {
           alpha = w / MaxCount;
         }
-        unsigned int BBProb = multicompiler::NOPInsertionPercentage;
+        int BBProb = multicompiler::NOPInsertionPercentage;
         BBProb -= (int)(alpha * multicompiler::NOPInsertionRange);
-        BB->setNOPInsertionPercentage(BBProb);
+        if (BBProb <= 0) {
+          BB->setNOPInsertionPercentage(0);
+        } else {
+          BB->setNOPInsertionPercentage(BBProb);
+        }
         //printf("BB:%p w:%lf alpha:%lf Prob:%d\n", &*BB, w, alpha, BBProb);
       }
     }

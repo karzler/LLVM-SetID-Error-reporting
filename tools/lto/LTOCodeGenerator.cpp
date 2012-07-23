@@ -375,6 +375,18 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     cl::ParseCommandLineOptions(_codegenOptions.size(),
                                 const_cast<char **>(&_codegenOptions[0]));
 
+  // Seed the MultiCompiler RNG
+  std::string seeddata;
+  for (std::vector<char*>::iterator I = _codegenOptions.begin(),
+       E = _codegenOptions.end(); I != E; ++I) {
+    if (strncmp(*I, "-multicompiler-seed", 19) == 0) {
+      // Skip over the seed option itself
+      continue;
+    }
+    seeddata += *I;
+  }
+  multicompiler::Random::EntropyData = seeddata;
+
   // Permute the function list
   // While we *can* change the order of passes, I'd first like to look at
   // simply permuting the order in which functions are processed.

@@ -93,17 +93,20 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPInstructionCount += BB->size();
-    unsigned int BBProb = multicompiler::NOPInsertionPercentage;
+    int BBProb = multicompiler::NOPInsertionPercentage;
     if (BB->getBasicBlock()) {
       BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
+      if (BBProb == multicompiler::NOPInsertionUnknown)
+        BBProb = multicompiler::NOPInsertionPercentage;
     }
+    //printf("BB(%p):%d\n", &*BB, BBProb);
     if (BBProb <= 0)
       continue;
 
-    //printf("BB(%p):%d\n", &*BB, BBProb);
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
-        unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+        printf("Roll on insn: %p\n", &*I);
+        int Roll = AESRandomNumberGenerator::Generator().randnext(100);
         if (Roll >= BBProb)
           continue;
 

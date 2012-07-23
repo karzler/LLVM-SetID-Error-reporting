@@ -78,7 +78,7 @@ private:
   InstListType InstList;
   Function *Parent;
 
-  unsigned NOPInsertionPercentage;
+  int NOPInsertionPercentage;
 
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
@@ -283,10 +283,10 @@ public:
   LandingPadInst *getLandingPadInst();
   const LandingPadInst *getLandingPadInst() const;
 
-  unsigned getNOPInsertionPercentage() const {
+  int getNOPInsertionPercentage() const {
     return NOPInsertionPercentage;
   }
-  void setNOPInsertionPercentage(unsigned NIP) {
+  void setNOPInsertionPercentage(int NIP) {
     NOPInsertionPercentage = NIP;
   }
 

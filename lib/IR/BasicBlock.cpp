@@ -43,7 +43,7 @@ template class llvm::SymbolTableListTraits<Instruction, BasicBlock>;
 BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
   : Value(Type::getLabelTy(C), Value::BasicBlockVal), Parent(0),
-    NOPInsertionPercentage(multicompiler::NOPInsertionPercentage) {
+    NOPInsertionPercentage(multicompiler::NOPInsertionUnknown) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);

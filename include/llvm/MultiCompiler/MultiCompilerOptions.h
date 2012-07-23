@@ -29,5 +29,7 @@ extern unsigned int ProfiledNOPInsertion;
 extern unsigned int NOPInsertionRange;
 extern bool NOPInsertionUseLog;
 
+static const int NOPInsertionUnknown = -1;
+
 }
 #endif

@@ -105,7 +105,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
-        printf("Roll on insn: %p\n", &*I);
         int Roll = AESRandomNumberGenerator::Generator().randnext(100);
         if (Roll >= BBProb)
           continue;

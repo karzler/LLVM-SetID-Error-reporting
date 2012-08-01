@@ -63,14 +63,21 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
   if (MaxCount <= 0.0)
     return false;
 
+  bool useMinThreshold = (multicompiler::ProfiledNOPMinThreshold > 0 &&
+                          multicompiler::ProfiledNOPMinThreshold <= 100);
+  double minThreshold = MaxCount * multicompiler::ProfiledNOPMinThreshold / 100;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration())
       continue;
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
       double w = PI.getExecutionCount(&*BB);
       if (w != ProfileInfo::MissingValue) {
-        double alpha;
-        if (multicompiler::NOPInsertionUseLog) {
+        double alpha = 0.0;
+        if (useMinThreshold) {
+            if (w >= minThreshold) {
+                alpha = 1.0;
+            }
+        } else if (multicompiler::NOPInsertionUseLog) {
           alpha = log(1.0 + w) / log(1.0 + MaxCount);
         } else {
           alpha = w / MaxCount;

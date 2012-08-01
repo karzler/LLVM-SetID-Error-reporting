@@ -30,6 +30,7 @@ unsigned int ISchedRandPercentage;
 unsigned int ProfiledNOPInsertion;
 unsigned int NOPInsertionRange;
 bool NOPInsertionUseLog;
+unsigned int ProfiledNOPMinThreshold;
 
 static llvm::cl::opt<unsigned int, true>
 RandomStackLayoutOpt("random-stack-layout",
@@ -126,5 +127,12 @@ NOPInsertionUseLogOpt("nop-insertion-use-log",
                       llvm::cl::desc("Use a logarithm for NOP insertion"),
                       llvm::cl::location(NOPInsertionUseLog),
                       llvm::cl::init(false));
+
+static llvm::cl::opt<unsigned int, true>
+ProfiledNOPMinThresholdOpt("profiled-nop-min-threshold",
+                           llvm::cl::desc("Threshold percentage of execution count"
+                                          " for minimal NOP insertion"),
+                           llvm::cl::location(ProfiledNOPMinThreshold),
+                           llvm::cl::init(0));
 
 }

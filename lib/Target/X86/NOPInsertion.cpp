@@ -31,6 +31,8 @@ using namespace llvm;
 using namespace multicompiler::Random;
 
 /* If you rename this, be sure to update the text in projects/test-suite/TEST.multicompilerstats.report */
+STATISTIC(PreNOPFunctionCount,     "multicompiler: Pre-NOP insertion function count");
+STATISTIC(PreNOPBasicBlockCount,   "multicompiler: Pre-NOP insertion basic block count");
 STATISTIC(PreNOPInstructionCount,  "multicompiler: Pre-NOP insertion instruction count");
 STATISTIC(InsertedInstructions,    "multicompiler: Total number of inserted instructions");
 STATISTIC(NumNOPInstructions,      "multicompiler: Number of inserted NOP instructions");
@@ -91,7 +93,9 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  PreNOPFunctionCount++;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
     int BBProb = multicompiler::NOPInsertionPercentage;
     if (BB->getBasicBlock()) {

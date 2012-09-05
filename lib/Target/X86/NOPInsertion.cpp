@@ -109,6 +109,10 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineBasicBlock::iterator J = next(I);
+      if (I->isPseudo()) {
+        I = J;
+        continue;
+      }
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         int Roll = AESRandomNumberGenerator::Generator().randnext(100);
         if (Roll >= BBProb)

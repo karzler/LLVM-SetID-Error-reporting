@@ -107,7 +107,8 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
     if (BBProb <= 0)
       continue;
 
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
+      MachineBasicBlock::iterator J = next(I);
       for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
         int Roll = AESRandomNumberGenerator::Generator().randnext(100);
         if (Roll >= BBProb)
@@ -120,13 +121,13 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         unsigned reg = nopRegs[NOPCode][!!is64Bit];
         switch (NOPCode) {
         case NOP:
-          NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(X86::NOOP));
+          NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP));
           break;
 
         case MOV_EBP:
         case MOV_ESP: {
           unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
-          NewMI = BuildMI(Fn, I->getDebugLoc(), TII->get(opc), reg)
+          NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(opc), reg)
             .addReg(reg);
           break;
         }
@@ -134,7 +135,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         case LEA_ESI:
         case LEA_EDI: {
           unsigned opc = is64Bit ? X86::LEA64r : X86::LEA32r;
-          NewMI = addRegOffset(BuildMI(Fn, I->getDebugLoc(),
+          NewMI = addRegOffset(BuildMI(*BB, I, I->getDebugLoc(),
                                        TII->get(opc), reg),
                                reg, false, 0);
           break;
@@ -142,10 +143,10 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         }
 
         if (NewMI != NULL) {
-          BB->insert(I, NewMI);
           IncrementCounters(NOPCode);
         }
       }
+      I = J;
     }
   }
 

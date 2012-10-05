@@ -97,11 +97,13 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
-    int BBProb = multicompiler::NOPInsertionPercentage;
+    int BBProb = multicompiler::getFunctionOption(
+                  multicompiler::NOPInsertionPercentage, *Fn.getFunction());
     if (BB->getBasicBlock()) {
       BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
       if (BBProb == multicompiler::NOPInsertionUnknown)
-        BBProb = multicompiler::NOPInsertionPercentage;
+        BBProb = multicompiler::getFunctionOption(
+                   multicompiler::NOPInsertionPercentage, *Fn.getFunction());
     }
     //printf("BB(%p):%d\n", &*BB, BBProb);
     if (BBProb <= 0)

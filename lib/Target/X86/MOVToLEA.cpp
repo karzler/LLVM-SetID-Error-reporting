@@ -72,7 +72,8 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
 
       unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
       ++MOVCandidates;
-      if (Roll >= multicompiler::MOVToLEAPercentage) {
+      if (Roll >= multicompiler::getFunctionOption(
+            multicompiler::MOVToLEAPercentage, *Fn.getFunction())) {
         ++I;
         continue;
       }

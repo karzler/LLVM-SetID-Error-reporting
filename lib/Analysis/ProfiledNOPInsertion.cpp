@@ -63,12 +63,15 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
   if (MaxCount <= 0.0)
     return false;
 
-  bool useMinThreshold = (multicompiler::ProfiledNOPMinThreshold > 0 &&
-                          multicompiler::ProfiledNOPMinThreshold <= 100);
-  double minThreshold = MaxCount * multicompiler::ProfiledNOPMinThreshold / 100;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration())
       continue;
+
+    int minThresholdOpt = multicompiler::getFunctionOption(
+      multicompiler::ProfiledNOPMinThreshold, *F);
+    bool useMinThreshold = (minThresholdOpt > 0 && minThresholdOpt <= 100);
+    double minThreshold = MaxCount * minThresholdOpt / 100;
+
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
       double w = PI.getExecutionCount(&*BB);
       if (w != ProfileInfo::MissingValue) {
@@ -77,13 +80,13 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
             if (w >= minThreshold) {
                 alpha = 1.0;
             }
-        } else if (multicompiler::NOPInsertionUseLog) {
+        } else if (multicompiler::getFunctionOption(multicompiler::NOPInsertionUseLog, *F)) {
           alpha = log(1.0 + w) / log(1.0 + MaxCount);
         } else {
           alpha = w / MaxCount;
         }
-        int BBProb = multicompiler::NOPInsertionPercentage;
-        BBProb -= (int)(alpha * multicompiler::NOPInsertionRange);
+        int BBProb = multicompiler::getFunctionOption(multicompiler::NOPInsertionPercentage, *F);
+        BBProb -= (int)(alpha * multicompiler::getFunctionOption(multicompiler::NOPInsertionRange, *F));
         if (BBProb <= 0) {
           BB->setNOPInsertionPercentage(0);
         } else {

@@ -46,9 +46,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-using namespace multicompiler;
-
-
 
 char PEI::ID = 0;
 char &llvm::PrologEpilogCodeInserterID = PEI::ID;
@@ -624,17 +621,20 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   SmallVector<unsigned, 10> array;
   for(int i = 0; i < MFI->getObjectIndexEnd(); i++) array.push_back(i);
 
-  if(RandomStackLayout){
+  if(multicompiler::getFunctionOption(multicompiler::RandomStackLayout,
+                                      *Fn.getFunction())){
     // Stack frame padding
     // If we haven't applied a pad yet, do so now.
+    unsigned int maxStackPadding = multicompiler::getFunctionOption(
+      multicompiler::MaxStackFramePadding, *Fn.getFunction());
     if (!PaddingApplied) {
-      uint32_t pad = Random::AESRandomNumberGenerator::Generator().randnext(MaxStackFramePadding);
+      uint32_t pad = multicompiler::Random::AESRandomNumberGenerator::Generator().randnext(maxStackPadding);
       Offset += pad;
       DEBUG(dbgs() << "Stack frame pad size " << Offset << " Max " 
-                   << MaxStackFramePadding << "\n");
+                   << maxStackPadding << "\n");
       PaddingApplied = true;
     }
-    Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
+    multicompiler::Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
     for(size_t i = 0; i < array.size(); i++) DEBUG(dbgs() << array[i] << " ");
     DEBUG(dbgs() << "\n");
   }

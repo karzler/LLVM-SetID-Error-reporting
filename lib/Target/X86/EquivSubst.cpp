@@ -196,7 +196,8 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
 
       unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
       ++EquivSubstCandidates;
-      if (Roll >= multicompiler::EquivSubstPercentage) {
+      if (Roll >= multicompiler::getFunctionOption(
+                    multicompiler::EquivSubstPercentage, *Fn.getFunction())) {
         ++I;
         continue;
       }

@@ -19,10 +19,10 @@
 
 namespace multicompiler {
 
-unsigned int RandomStackLayout;
+bool ShuffleStackFrames;
+unsigned int MaxStackFramePadding;
 std::string MultiCompilerSeed;
 int PreRARandomizerRange;
-unsigned int MaxStackFramePadding;
 std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
@@ -39,11 +39,17 @@ unsigned int ProfiledNOPMinThreshold;
 bool UseFunctionOptions;
 std::string FunctionOptionsFile;
 
+static llvm::cl::opt<bool, true>
+ShuffleStackFramesOpt("shuffle-stack-frames",
+                     llvm::cl::desc("Shuffle variables in function stack frames"),
+                     llvm::cl::location(ShuffleStackFrames),
+                     llvm::cl::init(false));
+
 static llvm::cl::opt<unsigned int, true>
-RandomStackLayoutOpt("random-stack-layout",
-                     llvm::cl::desc("Enable random stack layout for functions"),
-                     llvm::cl::location(RandomStackLayout),
-                     llvm::cl::init(0));
+MaxStackFramePaddingOpt("max-stack-pad-size",
+                        llvm::cl::desc("Maximum amount of stack frame padding"),
+                        llvm::cl::location(MaxStackFramePadding),
+                        llvm::cl::init(0));
 
 static llvm::cl::opt<std::string, true>
 MultiCompilerOptionsOpt("multicompiler-seed",
@@ -56,12 +62,6 @@ PreRARandomizerRangeOpt("pre-RA-randomizer-range",
                         llvm::cl::desc("Pre-RA instruction randomizer probability range; -1 for shuffle"),
                         llvm::cl::location(PreRARandomizerRange),
                         llvm::cl::init(0));
-
-static llvm::cl::opt<unsigned int, true>
-MaxStackFramePaddingOpt("max-stack-pad-size",
-                        llvm::cl::desc("Maximum amount of stack frame padding"),
-                        llvm::cl::location(MaxStackFramePadding),
-                        llvm::cl::init(8192));
 
 static llvm::cl::opt<unsigned int, true>
 NOPInsertionPercentageOpt("nop-insertion-percentage",
@@ -157,7 +157,7 @@ FunctionOptionsFileOpt("function-options-file",
 #define OPT(x)   { &x, &x##Opt }
 
 FunctionOptionInfo FunctionOptions[] = {
-  OPT(RandomStackLayout),
+  OPT(ShuffleStackFrames),
   OPT(MaxStackFramePadding),
   OPT(NOPInsertionPercentage),
   OPT(MaxNOPsPerInstruction),

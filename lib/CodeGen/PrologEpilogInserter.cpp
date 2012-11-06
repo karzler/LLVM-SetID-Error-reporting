@@ -621,22 +621,24 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   SmallVector<unsigned, 10> array;
   for(int i = 0; i < MFI->getObjectIndexEnd(); i++) array.push_back(i);
 
-  if(multicompiler::getFunctionOption(multicompiler::RandomStackLayout,
+  if(multicompiler::getFunctionOption(multicompiler::ShuffleStackFrames,
                                       *Fn.getFunction())){
-    // Stack frame padding
-    // If we haven't applied a pad yet, do so now.
+    multicompiler::Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
+    for(size_t i = 0; i < array.size(); i++) DEBUG(dbgs() << array[i] << " ");
+    DEBUG(dbgs() << "\n");
+  }
+  // Stack frame padding
+  // If we haven't applied a pad yet, do so now.
+  if (!PaddingApplied) {
     unsigned int maxStackPadding = multicompiler::getFunctionOption(
       multicompiler::MaxStackFramePadding, *Fn.getFunction());
-    if (!PaddingApplied) {
+    if (maxStackPadding > 0) {
       uint32_t pad = multicompiler::Random::AESRandomNumberGenerator::Generator().randnext(maxStackPadding);
       Offset += pad;
       DEBUG(dbgs() << "Stack frame pad size " << Offset << " Max " 
                    << maxStackPadding << "\n");
-      PaddingApplied = true;
     }
-    multicompiler::Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
-    for(size_t i = 0; i < array.size(); i++) DEBUG(dbgs() << array[i] << " ");
-    DEBUG(dbgs() << "\n");
+    PaddingApplied = true;
   }
 
   // Then assign frame offsets to stack objects that are not used to spill

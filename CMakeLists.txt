@@ -409,10 +409,6 @@ add_subdirectory(lib/TableGen)
 
 add_subdirectory(utils/TableGen)
 
-# MultiCompiler specific code -- NOT transforms
-# CodeGen depends on this too
-add_subdirectory(lib/MultiCompiler)
-
 add_subdirectory(include/llvm)
 
 add_subdirectory(lib)

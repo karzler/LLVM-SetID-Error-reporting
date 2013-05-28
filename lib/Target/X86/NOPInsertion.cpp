@@ -69,11 +69,20 @@ public:
 
 char NOPInsertionPass::ID = 0;
 
-enum { NOP, MOV_EBP, MOV_ESP,
-       LEA_ESI, LEA_EDI, MAX_NOPS };
+enum { NOP,
+       /*NOP2, NOP3, NOP4, NOP5, NOP6,*/
+       MOV_EBP, MOV_ESP,
+       LEA_ESI, LEA_EDI, 
+       MAX_NOPS };
 
 static const unsigned nopRegs[MAX_NOPS][2] = {
     { 0, 0 },
+/*    { 0, 0 },
+    { 0, 0 },
+    { 0, 0 },
+    { 0, 0 },
+    { 0, 0 },
+*/
     { X86::EBP, X86::RBP },
     { X86::ESP, X86::RSP },
     { X86::ESI, X86::RSI },
@@ -84,6 +93,12 @@ void NOPInsertionPass::IncrementCounters(int const code) {
   ++InsertedInstructions;
   switch(code) {
   case NOP:      ++NumNOPInstructions; break;
+/*  case NOP2:     ++NumNOPInstructions; break;
+  case NOP3:     ++NumNOPInstructions; break;
+  case NOP4:     ++NumNOPInstructions; break;
+  case NOP5:     ++NumNOPInstructions; break;
+  case NOP6:     ++NumNOPInstructions; break;
+*/
   case MOV_EBP:  ++NumMovEBPInstructions; break;
   case MOV_ESP:  ++NumMovESPInstructions; break;
   case LEA_ESI:  ++NumLeaESIInstructions; break;
@@ -130,11 +145,41 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP));
           break;
 
-        case MOV_EBP:
+/*        case NOP2:
+          NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP2));
+          break;
+
+	case NOP3:
+	  NewMI = addDirectMem(BuildMI(*BB, I, I->getDebugLoc(),
+                                       TII->get(X86::NOOP3)), X86::RAX);
+          break;
+
+	case NOP4:
+	  NewMI = addRegOffset(
+			BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP3)),
+                        X86::RAX, false, 0
+		  );
+          break;
+       
+        case NOP5:
+          NewMI = addRegReg(
+		      BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP5)),
+		      X86::RAX, false, X86::RAX, false		    
+		  );
+          break;
+                                        
+        case NOP6:
+          NewMI = addRegReg(
+		      BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP6)),
+		      X86::RAX, false, X86::RAX, false		    
+		  );
+          break;
+*/                                        
+	case MOV_EBP:
         case MOV_ESP: {
           unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(opc), reg)
-            .addReg(reg);
+		.addReg(reg);
           break;
         }
 
@@ -155,7 +200,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       I = J;
     }
   }
-
   return true;
 }
 

@@ -769,6 +769,11 @@ def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
 // Nop
 let neverHasSideEffects = 1, SchedRW = [WriteZero] in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", [], IIC_NOP>;
+  def NOOP2 : I<0x90, RawFrm, (outs), (ins), "nop{2}", []>, OpSize;
+  def NOOP3 : I<0x1f, MRM0m, (outs), (ins i32mem:$zero), "nop{3}\t$zero", []>, TB;
+  def NOOP4 : I<0x1f, MRM0m, (outs), (ins i32mem:$zero), "nop{4}\t$zero", []>, TB;
+  def NOOP5 : I<0x1f, MRM0m, (outs), (ins i32mem:$zero), "nop{5}\t$zero", []>, TB;
+  def NOOP6 : I<0x1f, MRM0m, (outs), (ins i16mem:$zero), "nop{6}\t$zero", []>, TB, OpSize;
   def NOOPW : I<0x1f, MRM0m, (outs), (ins i16mem:$zero),
                 "nop{w}\t$zero", [], IIC_NOP>, TB, OpSize;
   def NOOPL : I<0x1f, MRM0m, (outs), (ins i32mem:$zero),

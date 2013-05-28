@@ -109,12 +109,14 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   PreNOPFunctionCount++;
+  static int nopsInserted = 0;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
     int BBProb = multicompiler::getFunctionOption(
                   multicompiler::NOPInsertionPercentage, *Fn.getFunction());
     if (BB->getBasicBlock()) {
+      double exeCount = BB->getBasicBlock()->getExeCount();
       BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
       if (BBProb == multicompiler::NOPInsertionUnknown)
         BBProb = multicompiler::getFunctionOption(
@@ -143,6 +145,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         switch (NOPCode) {
         case NOP:
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP));
+	  nopsInserted++;
           break;
 
 /*        case NOP2:
@@ -180,6 +183,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(opc), reg)
 		.addReg(reg);
+	  nopsInserted++;
           break;
         }
 
@@ -189,6 +193,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           NewMI = addRegOffset(BuildMI(*BB, I, I->getDebugLoc(),
                                        TII->get(opc), reg),
                                reg, false, 0);
+	  nopsInserted++;
           break;
         }
         }

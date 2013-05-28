@@ -23,6 +23,8 @@ inline void addProfiledNOPInsertionPasses(llvm::PassManagerBase &PM) {
   } else if (multicompiler::ProfiledNOPInsertion == 2) {
     PM.add(llvm::createProfileLoaderPass(""));
     PM.add(createProfiledNOPInsertionPass());
+  } else if (multicompiler::ProfiledNOPInsertion == 3) {
+    PM.add(createProfiledNOPInsertionPass());
   }
 }
 

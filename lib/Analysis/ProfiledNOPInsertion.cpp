@@ -35,14 +35,24 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
       AU.setPreservesAll();
       AU.addRequired<ProfileInfo>();
+      if(multicompiler::ProfiledNOPInsertion == 3)
+      {
+        AU.addRequiredID(ProfileEstimatorPassID);
+        AU.addRequired<ProfileInfo>();
+      }
     }
     
   };
 }
 
 char ProfiledNOPInsertion::ID = 0;
-INITIALIZE_PASS(ProfiledNOPInsertion, "profiled-nop-insertion",
+INITIALIZE_PASS_BEGIN(ProfiledNOPInsertion, "profiled-nop-insertion",
                 "Profiled NOP Insertion", false, false)
+INITIALIZE_PASS_DEPENDENCY(ProfileEstimatorPass)
+INITIALIZE_AG_DEPENDENCY(ProfileInfo)
+INITIALIZE_PASS_END(ProfiledNOPInsertion, "profiled-nop-insertion",
+                "Profiled NOP Insertion", false, false)
+
 
 ModulePass *multicompiler::createProfiledNOPInsertionPass() {
   return new class ProfiledNOPInsertion();
@@ -54,8 +64,11 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration())
       continue;
+    ProfileInfo &PI2 = getAnalysis<ProfileInfo>(*F);
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
-      MaxCount = std::max(MaxCount, PI.getExecutionCount(&*BB));
+      MaxCount = std::max(MaxCount, PI2.getExecutionCount(&*BB));
+      double z = PI2.getExecutionCount(&*BB);
+      BB->setExeCount(z);
     }
   }
 
@@ -72,8 +85,9 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
     bool useMinThreshold = (minThresholdOpt > 0 && minThresholdOpt <= 100);
     double minThreshold = MaxCount * minThresholdOpt / 100;
 
+    ProfileInfo &PI2 = getAnalysis<ProfileInfo>(*F);    
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
-      double w = PI.getExecutionCount(&*BB);
+      double w = PI2.getExecutionCount(&*BB);
       if (w != ProfileInfo::MissingValue) {
         double alpha = 0.0;
         if (useMinThreshold) {

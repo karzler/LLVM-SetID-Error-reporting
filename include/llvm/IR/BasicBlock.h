@@ -79,6 +79,7 @@ private:
   Function *Parent;
 
   int NOPInsertionPercentage;
+  double exeCount;
 
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
@@ -288,6 +289,12 @@ public:
   }
   void setNOPInsertionPercentage(int NIP) {
     NOPInsertionPercentage = NIP;
+  }
+  double getExeCount() const {
+    return exeCount;
+  }
+  void setExeCount(double ec) {
+    exeCount = ec;
   }
 
 private:

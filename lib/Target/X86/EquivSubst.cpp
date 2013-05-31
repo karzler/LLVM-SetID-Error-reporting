@@ -142,18 +142,10 @@ OpcodeRevFilter ADD8RevFilter( X86::ADD8rr,  X86::ADD8rr_REV),
 MOVToLEAFilter MOVToLEA32Filter(X86::MOV32rr, X86::LEA32r),
                MOVToLEA64Filter(X86::MOV64rr, X86::LEA64r);
 
-ZeroRegFilter ZeroXOR16Filter(   X86::MOV16r0, X86::XOR32rr),
-              ZeroXOR16RevFilter(X86::MOV16r0, X86::XOR32rr_REV),
-              ZeroSUB16Filter(   X86::MOV16r0, X86::SUB32rr),
-              ZeroSUB16RevFilter(X86::MOV16r0, X86::SUB32rr_REV),
-              ZeroXOR32Filter(   X86::MOV32r0, X86::XOR32rr),
+ZeroRegFilter ZeroXOR32Filter(   X86::MOV32r0, X86::XOR32rr),
               ZeroXOR32RevFilter(X86::MOV32r0, X86::XOR32rr_REV),
               ZeroSUB32Filter(   X86::MOV32r0, X86::SUB32rr),
-              ZeroSUB32RevFilter(X86::MOV32r0, X86::SUB32rr_REV),
-              ZeroXOR64Filter(   X86::MOV64r0, X86::XOR32rr),
-              ZeroXOR64RevFilter(X86::MOV64r0, X86::XOR32rr_REV),
-              ZeroSUB64Filter(   X86::MOV64r0, X86::SUB32rr),
-              ZeroSUB64RevFilter(X86::MOV64r0, X86::SUB32rr_REV);
+              ZeroSUB32RevFilter(X86::MOV32r0, X86::SUB32rr_REV);
 
 
 const EquivInsnFilter *Filters[] = {
@@ -166,9 +158,7 @@ const EquivInsnFilter *Filters[] = {
   &XOR8RevFilter, &XOR16RevFilter, &XOR32RevFilter, &XOR64RevFilter,
   &MOV8RevFilter, &MOV16RevFilter, &MOV32RevFilter, &MOV64RevFilter,
   &MOVToLEA32Filter, &MOVToLEA64Filter,
-  &ZeroXOR16Filter, &ZeroXOR16RevFilter, &ZeroSUB16Filter, &ZeroSUB16RevFilter,
   &ZeroXOR32Filter, &ZeroXOR32RevFilter, &ZeroSUB32Filter, &ZeroSUB32RevFilter,
-  &ZeroXOR64Filter, &ZeroXOR64RevFilter, &ZeroSUB64Filter, &ZeroSUB64RevFilter,
 };
 
 class EquivSubstPass : public MachineFunctionPass {

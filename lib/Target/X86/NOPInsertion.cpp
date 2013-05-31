@@ -145,45 +145,45 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         switch (NOPCode) {
         case NOP:
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP));
-	  nopsInserted++;
+          nopsInserted++;
           break;
-
-/*        case NOP2:
+/*
+        case NOP2:
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP2));
           break;
 
-	case NOP3:
-	  NewMI = addDirectMem(BuildMI(*BB, I, I->getDebugLoc(),
+        case NOP3:
+          NewMI = addDirectMem(BuildMI(*BB, I, I->getDebugLoc(),
                                        TII->get(X86::NOOP3)), X86::RAX);
           break;
 
-	case NOP4:
-	  NewMI = addRegOffset(
-			BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP3)),
-                        X86::RAX, false, 0
-		  );
+        case NOP4:
+          NewMI = addRegOffset(
+            BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP3)),
+            X86::RAX, false, 0
+            );
           break;
        
         case NOP5:
           NewMI = addRegReg(
-		      BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP5)),
-		      X86::RAX, false, X86::RAX, false		    
-		  );
+            BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP5)),
+            X86::RAX, false, X86::RAX, false		    
+            );
           break;
                                         
         case NOP6:
           NewMI = addRegReg(
-		      BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP6)),
-		      X86::RAX, false, X86::RAX, false		    
-		  );
+            BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP6)),
+            X86::RAX, false, X86::RAX, false		    
+            );
           break;
-*/                                        
-	case MOV_EBP:
+*/
+        case MOV_EBP:
         case MOV_ESP: {
           unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(opc), reg)
-		.addReg(reg);
-	  nopsInserted++;
+            .addReg(reg);
+          nopsInserted++;
           break;
         }
 
@@ -193,7 +193,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           NewMI = addRegOffset(BuildMI(*BB, I, I->getDebugLoc(),
                                        TII->get(opc), reg),
                                reg, false, 0);
-	  nopsInserted++;
+          nopsInserted++;
           break;
         }
         }

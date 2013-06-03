@@ -200,6 +200,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
 
         if (NewMI != NULL) {
           IncrementCounters(NOPCode);
+          NewMI->setFlag(MachineInstr::InsertedNOP);
         }
       }
       I = J;

@@ -64,7 +64,8 @@ public:
     FrameSetup   = 1 << 0,              // Instruction is used as a part of
                                         // function frame setup code.
     BundledPred  = 1 << 1,              // Instruction has bundled predecessors.
-    BundledSucc  = 1 << 2               // Instruction has bundled successors.
+    BundledSucc  = 1 << 2,              // Instruction has bundled successors.
+    InsertedNOP  = 1 << 3
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
@@ -700,6 +701,12 @@ public:
     case TargetOpcode::DBG_VALUE:
       return true;
     }
+  }
+
+  //// isInsertedNOP - Return true if the instruction is an
+  //// artificially inserted NOP
+  bool isInsertedNOP() const {
+    return getFlag(InsertedNOP);
   }
 
   /// Return the number of instructions inside the MI bundle, excluding the

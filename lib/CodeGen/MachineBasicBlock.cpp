@@ -170,11 +170,8 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator B = begin(), E = end(), I = E;
-  /*
-   * FIXME(ahomescu): this doesn't work with NOP insertion
-  while (I != B && ((--I)->isTerminator() || I->isDebugValue()))
-    ;*/ /*noop */
-  I = B;
+  while (I != B && ((--I)->isTerminator() || I->isDebugValue() || I->isInsertedNOP()))
+    ; /*noop */
   while (I != E && !I->isTerminator())
     ++I;
   return I;
@@ -183,11 +180,8 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
 MachineBasicBlock::const_iterator
 MachineBasicBlock::getFirstTerminator() const {
   const_iterator B = begin(), E = end(), I = E;
-  /*
-   * FIXME(ahomescu): this doesn't work with NOP insertion
-  while (I != B && ((--I)->isTerminator() || I->isDebugValue()))
-    ;*/ /*noop */
-  I = B;
+  while (I != B && ((--I)->isTerminator() || I->isDebugValue() || I->isInsertedNOP()))
+    ; /*noop */
   while (I != E && !I->isTerminator())
     ++I;
   return I;
@@ -195,11 +189,8 @@ MachineBasicBlock::getFirstTerminator() const {
 
 MachineBasicBlock::instr_iterator MachineBasicBlock::getFirstInstrTerminator() {
   instr_iterator B = instr_begin(), E = instr_end(), I = E;
-  /*
-   * FIXME(ahomescu): this doesn't work with NOP insertion
-  while (I != B && ((--I)->isTerminator() || I->isDebugValue()))
-    ; */ /*noop */
-  I = B;
+  while (I != B && ((--I)->isTerminator() || I->isDebugValue() || I->isInsertedNOP()))
+    ; /*noop */
   while (I != E && !I->isTerminator())
     ++I;
   return I;

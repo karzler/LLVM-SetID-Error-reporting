@@ -224,4 +224,10 @@ cl::opt<unsigned>
 SSPBufferSize("stack-protector-buffer-size", cl::init(8),
               cl::desc("Lower bound for a buffer to be considered for "
                        "stack protection"));
+
+cl::opt<bool>
+NOPInsertion("nop-insertion",
+             cl::desc("Randomly add NOPs."),
+             cl::init(false));
+
 #endif

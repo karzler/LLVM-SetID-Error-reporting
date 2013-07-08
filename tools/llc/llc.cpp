@@ -34,6 +34,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -191,6 +192,13 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
 
+  // Seed the RNG
+  std::string seeddata;
+  for (int i = 0; i < argc; ++i) {
+    seeddata += argv[i];
+  }
+  RandomNumberGenerator::EntropyData = seeddata;
+
   // Compile the module TimeCompilations times to give better compile time
   // metrics.
   for (unsigned I = TimeCompilations; I; --I)
@@ -282,6 +290,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   Options.EnableSegmentedStacks = SegmentedStacks;
   Options.UseInitArray = UseInitArray;
   Options.SSPBufferSize = SSPBufferSize;
+  Options.NOPInsertion = NOPInsertion;
 
   OwningPtr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(),

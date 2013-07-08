@@ -158,6 +158,11 @@ SSPBufferSize("stack-protector-buffer-size", cl::init(8),
               cl::desc("Lower bound for a buffer to be considered for "
                        "stack protection"));
 
+static cl::opt<bool>
+NOPInsertion("nop-insertion",
+             cl::desc("Randomly add NOPs."),
+             cl::init(false));
+
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
   : _module(m), _target(t),
     _context(*_target->getMCAsmInfo(), *_target->getRegisterInfo(), NULL),
@@ -263,6 +268,7 @@ void LTOModule::getTargetOptions(TargetOptions &Options) {
   Options.EnableSegmentedStacks = SegmentedStacks;
   Options.UseInitArray = UseInitArray;
   Options.SSPBufferSize = SSPBufferSize;
+  Options.NOPInsertion = NOPInsertion;
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,

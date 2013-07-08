@@ -36,6 +36,7 @@
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SystemUtils.h"
@@ -510,6 +511,7 @@ static TargetOptions GetTargetOptions() {
   Options.EnableSegmentedStacks = SegmentedStacks;
   Options.UseInitArray = UseInitArray;
   Options.SSPBufferSize = SSPBufferSize;
+  Options.NOPInsertion = NOPInsertion;
   return Options;
 }
 
@@ -581,6 +583,13 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv,
     "llvm .bc -> .bc modular optimizer and analysis printer\n");
+
+  // Seed the RNG
+  std::string seeddata;
+  for (int i = 0; i < argc; ++i) {
+    seeddata += argv[i];
+  }
+  RandomNumberGenerator::EntropyData = seeddata;
 
   if (AnalyzeOnly && NoOutput) {
     errs() << argv[0] << ": analyze mode conflicts with no-output mode.\n";

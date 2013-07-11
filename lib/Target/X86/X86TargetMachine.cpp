@@ -16,7 +16,6 @@
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
@@ -232,8 +231,10 @@ bool X86PassConfig::addPreEmitPass() {
   // into LEAs, which we don't want to happen
   addPass(createMOVToLEAPass());
   addPass(createEquivSubstPass());
-  addPass(createNOPInsertionPass(getX86Subtarget().is64Bit()));
-  ShouldPrint = true;
+  if (TM->Options.NOPInsertion) {
+    addPass(createNOPInsertionPass(getX86Subtarget().is64Bit()));
+    ShouldPrint = true;
+  }
 
   return ShouldPrint;
 }

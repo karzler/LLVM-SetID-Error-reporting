@@ -1073,6 +1073,23 @@ AC_ARG_WITH(internal-prefix,
     withval="")
 AC_SUBST(INTERNAL_PREFIX,[$withval])
 
+dnl Enable random number generation using openssl (or fallback to a LCG)
+AC_ARG_ENABLE(rng,
+              AS_HELP_STRING([--enable-rng],
+                             [Enable random number generation (default is
+                              NO)]),,
+                              enableval=default)
+case "$enableval" in
+  yes) AC_SUBST(LLVM_ENABLE_RNG,[1]) ;;
+  no)  AC_SUBST(LLVM_ENABLE_RNG,[0]) ;;
+  default) AC_SUBST(LLVM_ENABLE_RNG,[0]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-rng. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([LLVM_ENABLE_RNG],$LLVM_ENABLE_RNG,
+                   [Define if RNG is enabled])
+
+
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -1497,6 +1514,22 @@ fi
 AC_SUBST(LIBXML2_LIBS)
 AC_SUBST(LIBXML2_INC)
 
+dnl openssl is optional; used for RNG
+AC_ARG_WITH(openssl,
+  AS_HELP_STRING([--with-openssl],
+    [Use the openssl libcrypto library]),
+    [
+      AC_SUBST(USE_OPENSSL, [1])
+      AC_CHECK_LIB(crypto, AES_ctr128_encrypt, [], [
+        echo "Error! You need to have openssl installed."
+        exit -1
+      ])
+    ],
+    AC_SUBST(USE_OPENSSL, [0]))
+AC_DEFINE_UNQUOTED([USE_OPENSSL],$USE_OPENSSL,
+                   [Define if use the openssl libcrypto library])
+
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 6: Check for header files
@@ -1537,6 +1570,13 @@ if test "$LLVM_ENABLE_ZLIB" -eq 1 ; then
                    AC_SUBST(HAVE_LIBZ, 0))
 else
   AC_SUBST(HAVE_LIBZ, 0)
+fi
+if test "$LLVM_USE_OPENSSL" -eq 1 ; then
+  AC_CHECK_HEADERS([openssl/aes.h openssl/evp.h],
+                   AC_SUBST(HAVE_OPENSSL, 1),
+                   AC_SUBST(HAVE_OPENSSL, 0))
+else
+  AC_SUBST(HAVE_OPENSSL, 0)
 fi
 
 dnl Try to find ffi.h.

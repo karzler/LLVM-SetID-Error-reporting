@@ -236,6 +236,9 @@
 /* Define to 1 if you have the 'z' library (-lz). */
 #cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
 
+/* Define to 1 if you have the 'crypto' library (-lcrypto). */
+#cmakedefine HAVE_CRYPTO ${HAVE_CRYPTO}
+
 /* Define to 1 if you have the <limits.h> header file. */
 #cmakedefine HAVE_LIMITS_H ${HAVE_LIMITS_H}
 
@@ -507,6 +510,11 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #cmakedefine HAVE_ZLIB_H ${HAVE_ZLIB_H}
 
+/* Define to 1 if you have the <openssl/aes.h> and <openssl/evp.h>
+header files. */
+#cmakedefine HAVE_OPENSSL_AES_H ${HAVE_OPENSSL_AES_H}
+#cmakedefine HAVE_OPENSSL_EVP_H ${HAVE_OPENSSL_EVP_H}
+
 /* Have host's _alloca */
 #cmakedefine HAVE__ALLOCA ${HAVE__ALLOCA}
 
@@ -581,6 +589,12 @@
 
 /* Define if zlib compression is available */
 #cmakedefine01 LLVM_ENABLE_ZLIB
+
+/* Define if random number generator should be built */
+#cmakedefine01 LLVM_ENABLE_RNG
+
+/* Define if using openssl */
+#cmakedefine01 LLVM_USE_OPENSSL
 
 /* Installation directory for config files */
 #cmakedefine LLVM_ETCDIR "${LLVM_ETCDIR}"

@@ -1155,7 +1155,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
            << "  if (multicompiler::RandomizeRegisters && !ShuffledOrders) {\n";
         for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
           if (!RC.getOrder(oi).empty()) {
-            OS << "    multicompiler::Random::AESRandomNumberGenerator"
+            OS << "    RandomNumberGenerator"
                << "::Generator().shuffle(AltOrder" << oi << ", "
                << RC.getOrder(oi).size() << ");\n";
           }

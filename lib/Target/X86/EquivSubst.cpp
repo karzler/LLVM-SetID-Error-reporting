@@ -19,12 +19,11 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
-using namespace multicompiler::Random;
 
 STATISTIC(PreEquivSubstInstructionCount, "multicompiler: Pre-equivalent substitution instruction count");
 STATISTIC(EquivSubstCandidates,          "multicompiler: Number of equivalent substitution candidates");
@@ -194,7 +193,7 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
         continue;
       }
 
-      unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      unsigned int Roll = RandomNumberGenerator::Generator().Random(100);
       ++EquivSubstCandidates;
       if (Roll >= multicompiler::getFunctionOption(
                     multicompiler::EquivSubstPercentage, *Fn.getFunction())) {
@@ -202,7 +201,7 @@ bool EquivSubstPass::runOnMachineFunction(MachineFunction &Fn) {
         continue;
       }
 
-      unsigned int Pick = AESRandomNumberGenerator::Generator().randnext(Candidates.size());
+      unsigned int Pick = RandomNumberGenerator::Generator().Random(Candidates.size());
       MachineBasicBlock::iterator J = I;
       ++I;
       Candidates[Pick]->subst(*BB, TII, J);

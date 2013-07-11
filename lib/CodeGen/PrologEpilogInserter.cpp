@@ -34,10 +34,10 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -623,7 +623,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   if(multicompiler::getFunctionOption(multicompiler::ShuffleStackFrames,
                                       *Fn.getFunction())){
-    multicompiler::Random::AESRandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
+    RandomNumberGenerator::Generator().shuffle<unsigned, 10>(array);
     for(size_t i = 0; i < array.size(); i++) DEBUG(dbgs() << array[i] << " ");
     DEBUG(dbgs() << "\n");
   }
@@ -633,7 +633,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     unsigned int maxStackPadding = multicompiler::getFunctionOption(
       multicompiler::MaxStackFramePadding, *Fn.getFunction());
     if (maxStackPadding > 0) {
-      uint32_t pad = multicompiler::Random::AESRandomNumberGenerator::Generator().randnext(maxStackPadding);
+      uint32_t pad = RandomNumberGenerator::Generator().Random(maxStackPadding);
       Offset += pad;
       DEBUG(dbgs() << "Stack frame pad size " << Offset << " Max " 
                    << maxStackPadding << "\n");

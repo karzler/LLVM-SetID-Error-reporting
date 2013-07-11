@@ -26,11 +26,9 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -107,6 +105,23 @@ static cl::opt<int> MaxReorderWindow(
 static cl::opt<unsigned> AvgIPC(
   "sched-avg-ipc", cl::Hidden, cl::init(1),
   cl::desc("Average inst/cycle whan no target itinerary exists."));
+
+
+static cl::opt<bool> RandomizeSchedule(
+  "sched-randomize",
+  cl::desc("Enable randomization of scheduling"),
+  cl::init(false));
+
+static cl::opt<bool> WorstSchedule(
+  "sched-worst",
+  cl::desc("Enable \"worst\" scheduling"),
+  cl::init(false));
+
+static cl::opt<unsigned> SchedRandPercentage(
+  "sched-randomize-percentage",
+  cl::desc("Percentage of instructions where schedule is randomized"),
+  cl::init(50));
+
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -1786,11 +1801,9 @@ class RegReductionPriorityQueue : public RegReductionPQBase {
 
   static SUnit *popRandom(std::vector<SUnit*> &Q) {
     std::vector<SUnit *>::iterator Best = Q.begin();
-    multicompiler::Random::AESRandomNumberGenerator &randGen =
-      multicompiler::Random::AESRandomNumberGenerator::Generator();
-    size_t randIndex = randGen.randnext(Q.size());
-    ++NumChoices;
-    NumOptions += Q.size();
+    RandomNumberGenerator &randGen =
+      RandomNumberGenerator::Generator();
+    size_t randIndex = randGen.Random(Q.size());
     SUnit *V = Q[randIndex];
     if (randIndex < Q.size() - 1)
       std::swap(Q[randIndex], Q.back());
@@ -1819,17 +1832,19 @@ public:
     if (Queue.empty()) return NULL;
 
     SUnit *V;
-    if (multicompiler::PreRARandomizerRange == -2) {
+    if (WorstSchedule) {
       V = popWorst(Queue, Picker);
-    } else {
-      multicompiler::Random::AESRandomNumberGenerator &randGen =
-        multicompiler::Random::AESRandomNumberGenerator::Generator();
-      unsigned int Roll = randGen.randnext(100);
-      if (Roll < multicompiler::ISchedRandPercentage) {
+    } else if (RandomizeSchedule) {
+      RandomNumberGenerator &randGen =
+        RandomNumberGenerator::Generator();
+      unsigned int Roll = randGen.Random(100);
+      if (Roll < SchedRandPercentage) {
         V = popRandom(Queue);
       } else {
         V = popFromQueue(Queue, Picker, scheduleDAG);
       }
+    } else {
+      V = popFromQueue(Queue, Picker, scheduleDAG);
     }
     V->NodeQueueId = 0;
     return V;
@@ -1890,11 +1905,11 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
 
   if (multicompiler::PreRARandomizerRange > 0) {
     // TODO: figure out how to make this repeatable/deterministic
-    SethiUllmanNumber = 1 + multicompiler::Random::AESRandomNumberGenerator::Generator().randnext(
+    SethiUllmanNumber = 1 + RandomNumberGenerator::Generator().Random(
       multicompiler::PreRARandomizerRange);
     return SethiUllmanNumber;
   }
-
+ 
   unsigned Extra = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
@@ -1912,7 +1927,6 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
 
   if (SethiUllmanNumber == 0)
     SethiUllmanNumber = 1;
-  
   return SethiUllmanNumber;
 }
 

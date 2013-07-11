@@ -211,6 +211,9 @@
 /* Set to 1 if the isnan function is found in <math.h> */
 #undef HAVE_ISNAN_IN_MATH_H
 
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#undef HAVE_LIBCRYPTO
+
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
 
@@ -314,6 +317,12 @@
 
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
+
+/* Define to 1 if you have the <openssl/aes.h> header file. */
+#undef HAVE_OPENSSL_AES_H
+
+/* Define to 1 if you have the <openssl/evp.h> header file. */
+#undef HAVE_OPENSSL_EVP_H
 
 /* Define to 1 if you have the `posix_spawn' function. */
 #undef HAVE_POSIX_SPAWN
@@ -581,6 +590,9 @@
 /* Installation directory for documentation */
 #undef LLVM_DOCSDIR
 
+/* Define if RNG is enabled */
+#undef LLVM_ENABLE_RNG
+
 /* Define if threads enabled */
 #undef LLVM_ENABLE_THREADS
 
@@ -730,6 +742,9 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
+
+/* Define if use the openssl libcrypto library */
+#undef USE_OPENSSL
 
 /* Define if use udis86 library */
 #undef USE_UDIS86

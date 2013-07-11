@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

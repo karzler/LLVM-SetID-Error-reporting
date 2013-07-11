@@ -17,9 +17,9 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include <cassert>
 
 namespace llvm {
@@ -107,9 +107,7 @@ private:
     if (!multicompiler::RandomizeRegisters || RegsShuffled)
       return;
 
-    multicompiler::Random::AESRandomNumberGenerator &rand =
-      multicompiler::Random::AESRandomNumberGenerator::Generator();
-    rand.shuffle(const_cast<unsigned short*>(RegsBegin), RegsSize);
+    RandomNumberGenerator::Generator().shuffle(const_cast<unsigned short*>(RegsBegin), RegsSize);
     RegsShuffled = true;
   }
 };

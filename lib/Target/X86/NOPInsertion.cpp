@@ -20,26 +20,41 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 #include <cstdio>
 
 using namespace llvm;
-using namespace multicompiler::Random;
+using namespace multicompiler;
 
-/* If you rename this, be sure to update the text in projects/test-suite/TEST.multicompilerstats.report */
-STATISTIC(PreNOPFunctionCount,     "multicompiler: Pre-NOP insertion function count");
-STATISTIC(PreNOPBasicBlockCount,   "multicompiler: Pre-NOP insertion basic block count");
-STATISTIC(PreNOPInstructionCount,  "multicompiler: Pre-NOP insertion instruction count");
-STATISTIC(InsertedInstructions,    "multicompiler: Total number of inserted instructions");
-STATISTIC(NumNOPInstructions,      "multicompiler: Number of inserted NOP instructions");
-STATISTIC(NumMovEBPInstructions,   "multicompiler: Number of inserted MOV EBP, EBP instructions");
-STATISTIC(NumMovESPInstructions,   "multicompiler: Number of inserted MOV ESP, ESP instructions");
-STATISTIC(NumLeaESIInstructions,   "multicompiler: Number of inserted LEA ESI, ESI instructions");
-STATISTIC(NumLeaEDIInstructions,   "multicompiler: Number of inserted LEA EDI, EDI instructions");
+// namespace {
+//   static cl::opt<unsigned>
+//   NOPInsertionPercentage(
+//     "nop-insertion-percentage",
+//     cl::desc("Percentage of instructions that have NOPs prepended"),
+//     cl::init(50));
+
+//   static cl::opt<unsigned>
+//   MaxNOPsPerInstruction(
+//     "max-nops-per-instruction",
+//     llvm::cl::desc("Maximum number of NOPs per instruction"),
+//     llvm::cl::init(1));
+// }
+
+
+STATISTIC(PreNOPFunctionCount,     "Pre-NOP insertion function count");
+STATISTIC(PreNOPBasicBlockCount,   "Pre-NOP insertion basic block count");
+STATISTIC(PreNOPInstructionCount,  "Pre-NOP insertion instruction count");
+STATISTIC(InsertedInstructions,    "Total number of inserted instructions");
+STATISTIC(NumNOPInstructions,      "Number of inserted NOP instructions");
+STATISTIC(NumMovEBPInstructions,   "Number of inserted MOV EBP, EBP instructions");
+STATISTIC(NumMovESPInstructions,   "Number of inserted MOV ESP, ESP instructions");
+STATISTIC(NumLeaESIInstructions,   "Number of inserted LEA ESI, ESI instructions");
+STATISTIC(NumLeaEDIInstructions,   "Number of inserted LEA EDI, EDI instructions");
 
 namespace {
 class NOPInsertionPass : public MachineFunctionPass {
@@ -113,18 +128,6 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
-    int BBProb = multicompiler::getFunctionOption(
-                  multicompiler::NOPInsertionPercentage, *Fn.getFunction());
-    if (BB->getBasicBlock()) {
-      double exeCount = BB->getBasicBlock()->getExeCount();
-      BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
-      if (BBProb == multicompiler::NOPInsertionUnknown)
-        BBProb = multicompiler::getFunctionOption(
-                   multicompiler::NOPInsertionPercentage, *Fn.getFunction());
-    }
-    //printf("BB(%p):%d\n", &*BB, BBProb);
-    if (BBProb <= 0)
-      continue;
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineBasicBlock::iterator J = next(I);
@@ -132,12 +135,12 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         I = J;
         continue;
       }
-      for (unsigned int i = 0; i < multicompiler::MaxNOPsPerInstruction; i++) {
-        int Roll = AESRandomNumberGenerator::Generator().randnext(100);
-        if (Roll >= BBProb)
+      for (unsigned int i = 0; i < MaxNOPsPerInstruction; i++) {
+        unsigned int Roll = RandomNumberGenerator::Generator().Random(100);
+        if (Roll >= NOPInsertionPercentage)
           continue;
 
-        int NOPCode = AESRandomNumberGenerator::Generator().randnext(MAX_NOPS);
+        int NOPCode = RandomNumberGenerator::Generator().Random(MAX_NOPS);
 
         // TODO(ahomescu): figure out if we need to preserve kill information
         MachineInstr *NewMI = NULL;

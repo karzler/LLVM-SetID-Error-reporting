@@ -1,10 +1,3 @@
 add_llvm_library(LLVMMultiCompiler
-  AESCounterModeRNG.cpp
-  AESRandomNumberGenerator.cpp
   MultiCompilerOptions.cpp
-  Rand48.cpp
-  Random.cpp
-  Skein.cpp
-  SkeinBlock.cpp
-  SkeinPBKDF2.cpp
   )

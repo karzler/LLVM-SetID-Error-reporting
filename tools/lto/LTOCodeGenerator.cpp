@@ -28,14 +28,14 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/MultiCompiler/ProfiledNOPInsertion.h"
+#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -49,7 +49,6 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
 using namespace llvm;
-using namespace multicompiler::Random;
 
 static cl::opt<bool>
 DisableOpt("disable-opt", cl::init(false),
@@ -375,24 +374,20 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     cl::ParseCommandLineOptions(_codegenOptions.size(),
                                 const_cast<char **>(&_codegenOptions[0]));
 
-  // Seed the MultiCompiler RNG
+  // Seed the RNG
   std::string seeddata;
   for (std::vector<char*>::iterator I = _codegenOptions.begin(),
        E = _codegenOptions.end(); I != E; ++I) {
-    if (strncmp(*I, "-multicompiler-seed", 19) == 0) {
-      // Skip over the seed option itself
-      continue;
-    }
     seeddata += *I;
   }
-  multicompiler::Random::EntropyData = seeddata;
+  RandomNumberGenerator::EntropyData = seeddata;
 
   // Permute the function list
   // While we *can* change the order of passes, I'd first like to look at
   // simply permuting the order in which functions are processed.
   if (multicompiler::RandomizeFunctionList) {
-      //printf("Shuffling functions...\n");
-      AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
+    //printf("Shuffling functions...\n");
+    RandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
   }
 
   // mark which symbols can not be internalized
@@ -443,8 +438,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.run(*mergedModule);
 
   if (multicompiler::RandomizeFunctionList) {
-      //printf("Shuffling functions...\n");
-      AESRandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
+    //printf("Shuffling functions...\n");
+    RandomNumberGenerator::Generator().shuffle<Function>(mergedModule->getFunctionList());
   }
 
   // Run the code generator, and write assembly file

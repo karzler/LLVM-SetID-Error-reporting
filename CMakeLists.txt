@@ -155,6 +155,10 @@ include(AddLLVMDefinitions)
 
 option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
 
+option(LLVM_ENABLE_RNG "Build a Random Number Generator." ON)
+
+option(LLVM_USE_OPENSSL "Use OpenSSL for random number generation." ON)
+
 # MSVC has a gazillion warnings with this.
 if( MSVC )
   option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)

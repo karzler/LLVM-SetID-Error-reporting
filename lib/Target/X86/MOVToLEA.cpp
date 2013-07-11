@@ -19,12 +19,11 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 
 using namespace llvm;
-using namespace multicompiler::Random;
 
 STATISTIC(PreMOVtoLEAInstructionCount, "multicompiler: Pre-MOV to LEA instruction count");
 STATISTIC(MOVCandidates,               "multicompiler: Number of MOV candidates");
@@ -70,7 +69,7 @@ bool MOVToLEAPass::runOnMachineFunction(MachineFunction &Fn) {
         continue;
       }
 
-      unsigned int Roll = AESRandomNumberGenerator::Generator().randnext(100);
+      unsigned int Roll = RandomNumberGenerator::Generator().Random(100);
       ++MOVCandidates;
       if (Roll >= multicompiler::getFunctionOption(
             multicompiler::MOVToLEAPercentage, *Fn.getFunction())) {

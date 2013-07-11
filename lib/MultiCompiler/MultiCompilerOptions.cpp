@@ -21,9 +21,9 @@ namespace multicompiler {
 
 bool ShuffleStackFrames;
 unsigned int MaxStackFramePadding;
-std::string MultiCompilerSeed;
+// std::string MultiCompilerSeed;
 int PreRARandomizerRange;
-std::string RNGStateFile;
+// std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
 unsigned int MOVToLEAPercentage;
@@ -31,7 +31,7 @@ unsigned int EquivSubstPercentage;
 unsigned int RandomizeFunctionList;
 unsigned int FunctionAlignment;
 bool RandomizeRegisters;
-unsigned int ISchedRandPercentage;
+// unsigned int ISchedRandPercentage;
 unsigned int ProfiledNOPInsertion;
 unsigned int NOPInsertionRange;
 bool NOPInsertionUseLog;
@@ -51,11 +51,11 @@ MaxStackFramePaddingOpt("max-stack-pad-size",
                         llvm::cl::location(MaxStackFramePadding),
                         llvm::cl::init(0));
 
-static llvm::cl::opt<std::string, true>
-MultiCompilerOptionsOpt("multicompiler-seed",
-                        llvm::cl::desc("RNG seed for multicompiler"),
-                        llvm::cl::location(MultiCompilerSeed),
-                        llvm::cl::init(""));
+// static llvm::cl::opt<std::string, true>
+// MultiCompilerOptionsOpt("multicompiler-seed",
+//                         llvm::cl::desc("RNG seed for multicompiler"),
+//                         llvm::cl::location(MultiCompilerSeed),
+//                         llvm::cl::init(""));
 
 static llvm::cl::opt<int, true>
 PreRARandomizerRangeOpt("pre-RA-randomizer-range",
@@ -67,7 +67,7 @@ static llvm::cl::opt<unsigned int, true>
 NOPInsertionPercentageOpt("nop-insertion-percentage",
                           llvm::cl::desc("Percentage of instructions that have NOPs prepended"),
                           llvm::cl::location(NOPInsertionPercentage),
-                          llvm::cl::init(0));
+                          llvm::cl::init(50));
 
 static llvm::cl::opt<unsigned int, true>
 MaxNOPsPerInstructionOpt("max-nops-per-instruction",
@@ -87,11 +87,11 @@ EquivSubstPercentageOpt("equiv-subst-percentage",
                       llvm::cl::location(EquivSubstPercentage),
                       llvm::cl::init(0));
 
-static llvm::cl::opt<std::string, true>
-RNGStateFileOpt("rng-state-file",
-                llvm::cl::desc("Location of the rng state file"),
-                llvm::cl::location(RNGStateFile),
-                llvm::cl::init(std::string("")));
+// static llvm::cl::opt<std::string, true>
+// RNGStateFileOpt("rng-state-file",
+//                 llvm::cl::desc("Location of the rng state file"),
+//                 llvm::cl::location(RNGStateFile),
+//                 llvm::cl::init(std::string("")));
 
 static llvm::cl::opt<unsigned int, true>
 RandomizeFunctionListOpt("randomize-function-list",
@@ -111,11 +111,11 @@ RandomizeRegistersOpt("randomize-registers",
                       llvm::cl::location(RandomizeRegisters),
                       llvm::cl::init(false));
 
-static llvm::cl::opt<unsigned int, true>
-ISchedRandPercentageOpt("isched-rand-percentage",
-                        llvm::cl::desc("Percentage of instructions where schedule is randomized"),
-                        llvm::cl::location(ISchedRandPercentage),
-                        llvm::cl::init(0));
+// static llvm::cl::opt<unsigned int, true>
+// ISchedRandPercentageOpt("isched-rand-percentage",
+//                         llvm::cl::desc("Percentage of instructions where schedule is randomized"),
+//                         llvm::cl::location(ISchedRandPercentage),
+//                         llvm::cl::init(0));
 
 static llvm::cl::opt<unsigned int, true>
 ProfiledNOPInsertionOpt("profiled-nop-insertion",

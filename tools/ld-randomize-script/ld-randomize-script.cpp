@@ -18,8 +18,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/MultiCompiler/AESRandomNumberGenerator.h"
-#include "llvm/MultiCompiler/MultiCompilerOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
@@ -32,13 +30,13 @@
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/RandomNumberGenerator.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include <iostream>
 #include <memory>
 using namespace llvm;
-using namespace multicompiler::Random;
 
 static const int PAGE_SIZE = 4096;
 
@@ -101,7 +99,7 @@ int main(int argc, char **argv) {
     return 1;
   }
   uint32_t newAddr = PAGE_SIZE * (minPage + 
-    AESRandomNumberGenerator::Generator().randnext(maxPage - minPage + 1));
+    RandomNumberGenerator::Generator().Random(maxPage - minPage + 1));
 
   char oldAddrStr[12];
   sprintf(oldAddrStr, "0x%08x", OldBaseAddress.getValue());

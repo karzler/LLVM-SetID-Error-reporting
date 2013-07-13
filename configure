@@ -1456,7 +1456,7 @@ Optional Features:
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
   --enable-libffi         Check for the presence of libffi (default is NO)
-  --enable-rng            Enable random number generation (default is NO)
+  --enable-rng            Enable random number generation (default is YES)
   --enable-ltdl-install   install libltdl
 
 Optional Packages:
@@ -1487,7 +1487,7 @@ Optional Packages:
                           Tell OProfile >= 0.9.4 how to symbolize JIT output
   --with-intel-jitevents  Notify Intel JIT profiling API of generated code
 
-  --with-openssl          Use the openssl libcrypto library
+  --without-openssl       Do not use the openssl libcrypto library
 
 Some influential environment variables:
   CC          C compiler command
@@ -6025,7 +6025,7 @@ case "$enableval" in
  ;;
   no)  LLVM_ENABLE_RNG=0
  ;;
-  default) LLVM_ENABLE_RNG=0
+  default) LLVM_ENABLE_RNG=1
  ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-rng. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-rng. Use \"yes\" or \"no\"" >&2;}
@@ -14306,7 +14306,10 @@ fi
 
 # Check whether --with-openssl was given.
 if test "${with_openssl+set}" = set; then
-  withval=$with_openssl;
+  withval=$with_openssl; USE_OPENSSL=0
+
+else
+
       USE_OPENSSL=1
 
 
@@ -14401,9 +14404,6 @@ else
 
 fi
 
-
-else
-  USE_OPENSSL=0
 
 fi
 
@@ -17180,7 +17180,7 @@ else
   HAVE_LIBZ=0
 
 fi
-if test "$LLVM_USE_OPENSSL" -eq 1 ; then
+if test "$USE_OPENSSL" -eq 1 ; then
 
 
 for ac_header in openssl/aes.h openssl/evp.h

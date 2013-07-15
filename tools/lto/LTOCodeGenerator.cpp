@@ -369,11 +369,6 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   Module* mergedModule = _linker.getModule();
 
-  // if options were requested, set them
-  if ( !_codegenOptions.empty() )
-    cl::ParseCommandLineOptions(_codegenOptions.size(),
-                                const_cast<char **>(&_codegenOptions[0]));
-
   // Seed the RNG
   std::string seeddata;
   for (std::vector<char*>::iterator I = _codegenOptions.begin(),

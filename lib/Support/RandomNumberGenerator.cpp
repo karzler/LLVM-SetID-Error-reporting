@@ -23,15 +23,39 @@
 #include "llvm/Support/ErrorHandling.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
+
+#if defined(HAVE_UNISTD_H)
+# include <unistd.h>
+#endif
+#if defined(HAVE_FCNTL_H)
+# include <fcntl.h>
+#endif
+#if defined(HAVE_SYS_UIO_H) && defined(HAVE_WRITEV)
+#  include <sys/uio.h>
+#endif
+
+#if defined(__CYGWIN__)
+#include <io.h>
+#endif
+
+#if defined(_MSC_VER)
+#include <io.h>
 #include <fcntl.h>
+#ifndef STDIN_FILENO
+# define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
+#endif
+#endif
+
 #if HAVE_OPENSSL
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #endif
-
-extern int errno;
 
 using namespace llvm;
 

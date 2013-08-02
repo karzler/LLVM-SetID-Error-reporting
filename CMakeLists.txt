@@ -390,6 +390,11 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
   link_directories("/usr/local/lib")
 endif( ${CMAKE_SYSTEM_NAME} MATCHES FreeBSD )
 
+# Add OpenSSL include directory
+if ( (${CMAKE_SYSTEM_NAME} MATCHES Windows) AND ${LLVM_ENABLE_RNG} AND ${HAVE_OPENSSL} )
+  include_directories(${OPENSSL_INCLUDE_DIR})
+endif()
+
 if( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -include llvm/Support/Solaris.h")
 endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )

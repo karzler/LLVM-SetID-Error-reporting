@@ -117,9 +117,8 @@ add_llvm_library(LLVMSupport
   Windows/Watchdog.inc
   )
 
-
 # If libcrypto is available, link for RandomNumberGenerator
-if ( LLVM_ENABLE_RNG AND HAVE_OPENSSL )
+if ( ${LLVM_ENABLE_RNG} AND ${HAVE_OPENSSL} )
   include_directories(${OPENSSL_INCLUDE_DIR})
   target_link_libraries(LLVMSupport ${OPENSSL_CRYPTO_LIBRARIES})
 endif()

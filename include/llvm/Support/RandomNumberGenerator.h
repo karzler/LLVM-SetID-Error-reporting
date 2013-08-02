@@ -5,7 +5,6 @@
 #include <llvm/ADT/ilist.h>
 #include <llvm/ADT/SmallVector.h>
 #include <string>
-#include <inttypes.h>
 
 #if HAVE_OPENSSL
 #include <openssl/aes.h>

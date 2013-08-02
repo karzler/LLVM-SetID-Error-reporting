@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#if LLVM_ENABLE_RNG == 1 && HAVE_OPENSSL_AES_H && HAVE_OPENSSL_EVP_H
+#if HAVE_OPENSSL
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #endif
@@ -59,7 +59,7 @@ RandomNumberGenerator::~RandomNumberGenerator() {
 std::string RandomNumberGenerator::EntropyData;
 
 
-#if USE_OPENSSL
+#if HAVE_OPENSSL
 
 RandomNumberGenerator::RandomNumberGenerator() {
   DEBUG(errs() << "AES RNG: Initializing context ");
@@ -259,6 +259,6 @@ uint64_t RandomNumberGenerator::Random(uint64_t max) {
   return (static_cast<double>(Random()) / UINT32_MAX) * max;
 }
 
-#endif // USE_OPENSSL
+#endif // HAVE_OPENSSL
 
 #endif // LLVM_ENABLE_RNG

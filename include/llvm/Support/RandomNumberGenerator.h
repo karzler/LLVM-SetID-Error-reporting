@@ -7,7 +7,7 @@
 #include <string>
 #include <inttypes.h>
 
-#if HAVE_OPENSSL_AES_H
+#if HAVE_OPENSSL
 #include <openssl/aes.h>
 #endif
 
@@ -40,7 +40,7 @@ private:
   void Reseed(StringRef Password, uint64_t Salt);
 
   // Internal state
-#if USE_OPENSSL
+#if HAVE_OPENSSL
   unsigned char IV[AES_BLOCK_SIZE];
   AES_KEY AESKey;
   unsigned char Key[AES_KEY_LENGTH];

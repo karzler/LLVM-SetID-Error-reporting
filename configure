@@ -778,7 +778,7 @@ USE_INTEL_JITEVENTS
 XML2CONFIG
 LIBXML2_LIBS
 LIBXML2_INC
-USE_OPENSSL
+LLVM_ENABLE_OPENSSL
 CXXCPP
 HAVE_PTHREAD
 HAVE_LIBZ
@@ -14306,11 +14306,11 @@ fi
 
 # Check whether --with-openssl was given.
 if test "${with_openssl+set}" = set; then
-  withval=$with_openssl; USE_OPENSSL=0
+  withval=$with_openssl; LLVM_ENABLE_OPENSSL=0
 
 else
 
-      USE_OPENSSL=1
+      LLVM_ENABLE_OPENSSL=1
 
 
 { echo "$as_me:$LINENO: checking for AES_ctr128_encrypt in -lcrypto" >&5
@@ -14409,7 +14409,7 @@ fi
 
 
 cat >>confdefs.h <<_ACEOF
-#define USE_OPENSSL $USE_OPENSSL
+#define LLVM_ENABLE_OPENSSL $LLVM_ENABLE_OPENSSL
 _ACEOF
 
 
@@ -17180,7 +17180,7 @@ else
   HAVE_LIBZ=0
 
 fi
-if test "$USE_OPENSSL" -eq 1 ; then
+if test "$LLVM_ENABLE_OPENSSL" -eq 1 ; then
 
 
 for ac_header in openssl/aes.h openssl/evp.h
@@ -17359,6 +17359,11 @@ else
   HAVE_OPENSSL=0
 
 fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_OPENSSL $HAVE_OPENSSL
+_ACEOF
+
 
 if test "$llvm_cv_enable_libffi" = "yes" ; then
 
@@ -23831,7 +23836,7 @@ USE_INTEL_JITEVENTS!$USE_INTEL_JITEVENTS$ac_delim
 XML2CONFIG!$XML2CONFIG$ac_delim
 LIBXML2_LIBS!$LIBXML2_LIBS$ac_delim
 LIBXML2_INC!$LIBXML2_INC$ac_delim
-USE_OPENSSL!$USE_OPENSSL$ac_delim
+LLVM_ENABLE_OPENSSL!$LLVM_ENABLE_OPENSSL$ac_delim
 CXXCPP!$CXXCPP$ac_delim
 HAVE_PTHREAD!$HAVE_PTHREAD$ac_delim
 HAVE_LIBZ!$HAVE_LIBZ$ac_delim

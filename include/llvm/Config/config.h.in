@@ -318,6 +318,9 @@
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
 
+/* Define if OpenSSL is available */
+#undef HAVE_OPENSSL
+
 /* Define to 1 if you have the <openssl/aes.h> header file. */
 #undef HAVE_OPENSSL_AES_H
 
@@ -590,6 +593,9 @@
 /* Installation directory for documentation */
 #undef LLVM_DOCSDIR
 
+/* Define if the openssl libcrypto library is enabled */
+#undef LLVM_ENABLE_OPENSSL
+
 /* Define if RNG is enabled */
 #undef LLVM_ENABLE_RNG
 
@@ -742,9 +748,6 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
-
-/* Define if use the openssl libcrypto library */
-#undef USE_OPENSSL
 
 /* Define if use udis86 library */
 #undef USE_UDIS86

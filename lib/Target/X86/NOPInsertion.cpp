@@ -130,7 +130,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
     PreNOPInstructionCount += BB->size();
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
-      MachineBasicBlock::iterator J = next(I);
+      MachineBasicBlock::iterator J = llvm::next(I);
       if (I->isPseudo()) {
         I = J;
         continue;

@@ -128,6 +128,18 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
+    int BBProb = multicompiler::getFunctionOption(
+                  NOPInsertionPercentage, *Fn.getFunction());
+    if (BB->getBasicBlock()) {
+      double exeCount = BB->getBasicBlock()->getExeCount();
+      BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
+      if (BBProb == multicompiler::NOPInsertionUnknown)
+        BBProb = multicompiler::getFunctionOption(
+                   NOPInsertionPercentage, *Fn.getFunction());
+    }
+    //printf("BB(%p):%d\n", &*BB, BBProb);
+    if (BBProb <= 0)
+      continue;
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineBasicBlock::iterator J = llvm::next(I);
@@ -137,7 +149,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
       }
       for (unsigned int i = 0; i < MaxNOPsPerInstruction; i++) {
         unsigned int Roll = RandomNumberGenerator::Generator().Random(100);
-        if (Roll >= NOPInsertionPercentage)
+        if (Roll >= BBProb)
           continue;
 
         int NOPCode = RandomNumberGenerator::Generator().Random(MAX_NOPS);

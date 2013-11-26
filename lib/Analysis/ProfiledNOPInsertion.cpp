@@ -34,12 +34,10 @@ namespace {
     
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
       AU.setPreservesAll();
-      AU.addRequired<ProfileInfo>();
-      if(multicompiler::ProfiledNOPInsertion == 3)
-      {
+      if (multicompiler::ProfiledNOPInsertion == 3) {
         AU.addRequiredID(ProfileEstimatorPassID);
-        AU.addRequired<ProfileInfo>();
       }
+      AU.addRequired<ProfileInfo>();
     }
     
   };
@@ -59,15 +57,19 @@ ModulePass *multicompiler::createProfiledNOPInsertionPass() {
 }
 
 bool ProfiledNOPInsertion::runOnModule(Module& M) {
-  ProfileInfo &PI = getAnalysis<ProfileInfo>();
+  ProfileInfo *PI = &getAnalysis<ProfileInfo>();
   double MaxCount = 0.0;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration())
       continue;
-    ProfileInfo &PI2 = getAnalysis<ProfileInfo>(*F);
+    if (multicompiler::ProfiledNOPInsertion == 3) {
+      // In mode 3, the EstimatorPass gives per-function profiles,
+      // so replace the global ProfileInfo with the function one
+      PI = &getAnalysis<ProfileInfo>(*F);
+    }
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
-      MaxCount = std::max(MaxCount, PI2.getExecutionCount(&*BB));
-      double z = PI2.getExecutionCount(&*BB);
+      MaxCount = std::max(MaxCount, PI->getExecutionCount(&*BB));
+      double z = PI->getExecutionCount(&*BB);
       BB->setExeCount(z);
     }
   }
@@ -76,6 +78,7 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
   if (MaxCount <= 0.0)
     return false;
 
+  PI = &getAnalysis<ProfileInfo>();
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration())
       continue;
@@ -85,9 +88,11 @@ bool ProfiledNOPInsertion::runOnModule(Module& M) {
     bool useMinThreshold = (minThresholdOpt > 0 && minThresholdOpt <= 100);
     double minThreshold = MaxCount * minThresholdOpt / 100;
 
-    ProfileInfo &PI2 = getAnalysis<ProfileInfo>(*F);    
+    if (multicompiler::ProfiledNOPInsertion == 3) {
+      PI = &getAnalysis<ProfileInfo>(*F);
+    }
     for (Function::iterator BB = F->begin(), EE = F->end(); BB != EE; ++BB) {
-      double w = PI2.getExecutionCount(&*BB);
+      double w = PI->getExecutionCount(&*BB);
       if (w != ProfileInfo::MissingValue) {
         double alpha = 0.0;
         if (useMinThreshold) {

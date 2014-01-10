@@ -25,6 +25,8 @@ extern int PreRARandomizerRange;
 extern std::string RNGStateFile;
 extern unsigned int NOPInsertionPercentage;
 extern unsigned int MaxNOPsPerInstruction;
+extern unsigned int EarlyNOPThreshold;
+extern unsigned int EarlyNOPMaxCount;
 extern unsigned int MOVToLEAPercentage;
 extern unsigned int EquivSubstPercentage;
 extern unsigned int RandomizeFunctionList;

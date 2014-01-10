@@ -26,6 +26,8 @@ int PreRARandomizerRange;
 // std::string RNGStateFile;
 unsigned int NOPInsertionPercentage;
 unsigned int MaxNOPsPerInstruction;
+unsigned int EarlyNOPThreshold;
+unsigned int EarlyNOPMaxCount;
 unsigned int MOVToLEAPercentage;
 unsigned int EquivSubstPercentage;
 unsigned int RandomizeFunctionList;
@@ -74,6 +76,18 @@ MaxNOPsPerInstructionOpt("max-nops-per-instruction",
                           llvm::cl::desc("Maximum number of NOPs per instruction"),
                           llvm::cl::location(MaxNOPsPerInstruction),
                           llvm::cl::init(1));
+
+static llvm::cl::opt<unsigned int, true>
+EarlyNOPThresholdOpt("early-nop-threshold",
+                     llvm::cl::desc("Threshold of inserted NOPs for NOP insertion early-mode"),
+                     llvm::cl::location(EarlyNOPThreshold),
+                     llvm::cl::init(0));
+
+static llvm::cl::opt<unsigned int, true>
+EarlyNOPMaxCountOpt("early-nop-max-count",
+                    llvm::cl::desc("Maximum number of NOPs per instruction in NOP early-mode"),
+                    llvm::cl::location(EarlyNOPMaxCount),
+                    llvm::cl::init(5));
 
 static llvm::cl::opt<unsigned int, true>
 MOVToLEAPercentageOpt("mov-to-lea-percentage",
@@ -161,6 +175,8 @@ FunctionOptionInfo FunctionOptions[] = {
   OPT(MaxStackFramePadding),
   OPT(NOPInsertionPercentage),
   OPT(MaxNOPsPerInstruction),
+  OPT(EarlyNOPThreshold),
+  OPT(EarlyNOPMaxCount),
   OPT(MOVToLEAPercentage),
   OPT(EquivSubstPercentage),
   OPT(NOPInsertionRange),

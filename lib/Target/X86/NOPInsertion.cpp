@@ -124,18 +124,17 @@ void NOPInsertionPass::IncrementCounters(int const code) {
 bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   PreNOPFunctionCount++;
-  static int nopsInserted = 0;
+  unsigned int NOPsInserted = 0;
+  int FnProb = multicompiler::getFunctionOption(
+      NOPInsertionPercentage, *Fn.getFunction());
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PreNOPBasicBlockCount++;
     PreNOPInstructionCount += BB->size();
-    int BBProb = multicompiler::getFunctionOption(
-                  NOPInsertionPercentage, *Fn.getFunction());
+    int BBProb = FnProb;
     if (BB->getBasicBlock()) {
-      double exeCount = BB->getBasicBlock()->getExeCount();
       BBProb = BB->getBasicBlock()->getNOPInsertionPercentage();
       if (BBProb == multicompiler::NOPInsertionUnknown)
-        BBProb = multicompiler::getFunctionOption(
-                   NOPInsertionPercentage, *Fn.getFunction());
+        BBProb = FnProb;
     }
     //printf("BB(%p):%d\n", &*BB, BBProb);
     if (BBProb <= 0)
@@ -147,8 +146,11 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         I = J;
         continue;
       }
-      for (unsigned int i = 0; i < MaxNOPsPerInstruction; i++) {
-        unsigned int Roll = RandomNumberGenerator::Generator().Random(100);
+      unsigned int NumNOPs = MaxNOPsPerInstruction;
+      if (NOPsInserted < EarlyNOPThreshold)
+        NumNOPs = RandomNumberGenerator::Generator().Random(EarlyNOPMaxCount);
+      for (unsigned int i = 0; i < NumNOPs; i++) {
+        int Roll = RandomNumberGenerator::Generator().Random(100);
         if (Roll >= BBProb)
           continue;
 
@@ -160,7 +162,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
         switch (NOPCode) {
         case NOP:
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(X86::NOOP));
-          nopsInserted++;
+          NOPsInserted++;
           break;
 /*
         case NOP2:
@@ -198,7 +200,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           unsigned opc = is64Bit ? X86::MOV64rr : X86::MOV32rr;
           NewMI = BuildMI(*BB, I, I->getDebugLoc(), TII->get(opc), reg)
             .addReg(reg);
-          nopsInserted++;
+          NOPsInserted++;
           break;
         }
 
@@ -208,7 +210,7 @@ bool NOPInsertionPass::runOnMachineFunction(MachineFunction &Fn) {
           NewMI = addRegOffset(BuildMI(*BB, I, I->getDebugLoc(),
                                        TII->get(opc), reg),
                                reg, false, 0);
-          nopsInserted++;
+          NOPsInserted++;
           break;
         }
         }

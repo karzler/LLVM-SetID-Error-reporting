@@ -29,7 +29,7 @@ extern unsigned int EarlyNOPThreshold;
 extern unsigned int EarlyNOPMaxCount;
 extern unsigned int MOVToLEAPercentage;
 extern unsigned int EquivSubstPercentage;
-extern unsigned int RandomizeFunctionList;
+extern bool RandomizeFunctionList;
 extern unsigned int FunctionAlignment;
 extern bool RandomizeRegisters;
 extern unsigned int ISchedRandPercentage;

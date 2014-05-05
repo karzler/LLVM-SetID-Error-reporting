@@ -30,7 +30,7 @@ unsigned int EarlyNOPThreshold;
 unsigned int EarlyNOPMaxCount;
 unsigned int MOVToLEAPercentage;
 unsigned int EquivSubstPercentage;
-unsigned int RandomizeFunctionList;
+bool RandomizeFunctionList;
 unsigned int FunctionAlignment;
 bool RandomizeRegisters;
 // unsigned int ISchedRandPercentage;
@@ -107,11 +107,11 @@ EquivSubstPercentageOpt("equiv-subst-percentage",
 //                 llvm::cl::location(RNGStateFile),
 //                 llvm::cl::init(std::string("")));
 
-static llvm::cl::opt<unsigned int, true>
+static llvm::cl::opt<bool, true>
 RandomizeFunctionListOpt("randomize-function-list",
                        llvm::cl::desc("Permute the function list"),
                        llvm::cl::location(RandomizeFunctionList),
-                       llvm::cl::init(0));
+                       llvm::cl::init(false));
 
 static llvm::cl::opt<unsigned int, true>
 FunctionAlignmentOpt("align-functions",

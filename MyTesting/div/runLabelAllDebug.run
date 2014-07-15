@@ -1,0 +1,18 @@
+
+/home/karzler/llvm/build2/Release+Asserts/bin/clang++ -g -O0 -c -emit-llvm helloworld.cpp -o helloworld.bc 
+
+
+# opt -load ../../build_test/Release+Asserts/lib/SetID.so -SetID-S helloworld.bc > helloworld-setID.ll
+/home/karzler/llvm/build2/Release+Asserts/bin/opt -load /home/karzler/llvm/build2/Release+Asserts/lib/SetID.so -SetID helloworld.bc -o helloworld-setID.bc
+
+
+#../../build_test/Release+Asserts/bin/clang++ -g -O0 helloworld-setID.bc -S -o helloworld-setID.s
+/home/karzler/llvm/build2/Release+Asserts/bin/clang++ -g -O0 helloworld-setID.bc -o helloworld-setID
+
+echo -e '\n'
+#/home/karzler/llvm/build2/Release+Asserts/bin/clang++ -g -O0 helloworld-setID.bc 
+
+echo -e '\n'
+#/home/karzler/llvm/build2/Release+Asserts/bin/llc helloworld-setID.bc -o helloworld-setID 
+
+echo -e '\n'

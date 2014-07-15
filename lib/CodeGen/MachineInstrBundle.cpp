@@ -18,6 +18,10 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
+
+std::string MachineInstrBuilder::CurrentMapID = "";
+unsigned MachineInstrBuilder::CurrentMapInstr = 0U;
+
 namespace {
   class UnpackMachineBundles : public MachineFunctionPass {
   public:

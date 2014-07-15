@@ -272,6 +272,7 @@ enum dwarf_constants {
   DW_AT_GNU_vector = 0x2107,
   DW_AT_GNU_template_name = 0x2110,
 
+
   // Extensions for Fission proposal.
   DW_AT_GNU_dwo_name = 0x2130,
   DW_AT_GNU_dwo_id = 0x2131,
@@ -294,6 +295,11 @@ enum dwarf_constants {
   DW_AT_APPLE_property_attribute = 0x3feb,
   DW_AT_APPLE_objc_complete_type = 0x3fec,
   DW_AT_APPLE_property = 0x3fed,
+  
+    
+  //karzler-- Instruction ID Dwarf Tags
+  DW_AT_map_id = 0x8777,
+  DW_TAG_map_id = 0x9777,
 
   // Attribute form encodings
   DW_FORM_addr = 0x01,

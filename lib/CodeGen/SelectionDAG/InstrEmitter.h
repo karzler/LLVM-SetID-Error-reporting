@@ -19,6 +19,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Support/raw_ostream.h"
+#include<sstream>
+#include<string>
 
 namespace llvm {
 
@@ -118,11 +121,28 @@ public:
   ///
   void EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
                 DenseMap<SDValue, unsigned> &VRBaseMap) {
-    if (Node->isMachineOpcode())
+		//karzler			
+	if (Node->getMapID().size() != 0){
+      //errs() << "EmitNode: " << Node->getMapID() << "\n";
+      errs() <<"Copying metadata from SDNode to the MachineInstr...\n";
+      
+      //karzler
+      unsigned num = 0;
+      for (MachineBasicBlock::instr_iterator I=MBB->instr_begin(), end=MBB->instr_end(); I!=end ; I++ ){
+        
+        std::ostringstream str_stream;
+        str_stream << "MapID: " << Node->getMapID() << ":" << num++;
+        I->setMapID(str_stream.str());
+      }
+    }
+    if (Node->isMachineOpcode()){
       EmitMachineNode(Node, IsClone, IsCloned, VRBaseMap);
-    else
-      EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap);
+    }else{
+		errs() << "EmitNode: "<< "isMachineOpCode: " << Node->isMachineOpcode() << ":"<< Node->getMapID() << "\n";//karzler
+		EmitSpecialNode(Node, IsClone, IsCloned, VRBaseMap);
+	}
   }
+  
 
   /// getBlock - Return the current basic block.
   MachineBasicBlock *getBlock() { return MBB; }

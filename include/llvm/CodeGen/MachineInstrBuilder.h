@@ -20,6 +20,9 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include<sstream>
+#include<string>
 
 namespace llvm {
 
@@ -47,10 +50,21 @@ class MachineInstrBuilder {
   MachineInstr *MI;
 public:
   MachineInstrBuilder() : MF(0), MI(0) {}
+  
+  //karzler
+  static std::string CurrentMapID;
+  static unsigned CurrentMapInstr;
+  //end karzler
 
   /// Create a MachineInstrBuilder for manipulating an existing instruction.
   /// F must be the machine function  that was used to allocate I.
-  MachineInstrBuilder(MachineFunction &F, MachineInstr *I) : MF(&F), MI(I) {}
+  MachineInstrBuilder(MachineFunction &F, MachineInstr *I) : MF(&F), MI(I) {
+	  //karzler
+	errs() << "               " << "Current MapID: "<< MachineInstrBuilder::CurrentMapID <<":" << "Current Instr ID: " << MachineInstrBuilder::CurrentMapInstr <<"\n";
+    std::ostringstream id;
+    id << MachineInstrBuilder::CurrentMapID << ":" << MachineInstrBuilder::CurrentMapInstr++;
+    MI->setMapID(id.str());
+	  }
 
   /// Allow automatic conversion to the machine instruction we are working on.
   ///
@@ -77,6 +91,18 @@ public:
                                                flags & RegState::InternalRead));
     return *this;
   }
+  
+  //setting currentMapID and Map Instrcution in the machine instructions...
+  //karzler
+  static void setCurrentMapID(std::string id){
+    //std::ostringstream temp;
+    MachineInstrBuilder::CurrentMapID = id;
+    MachineInstrBuilder::CurrentMapInstr = 0;
+  }
+  const MachineInstrBuilder &setMapID(std::string id) const{
+    MI->setMapID(id);
+    return *this;
+  }//end karzler
 
   /// addImm - Add a new immediate operand.
   ///

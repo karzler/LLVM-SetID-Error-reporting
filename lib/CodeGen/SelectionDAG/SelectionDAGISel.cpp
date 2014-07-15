@@ -56,6 +56,12 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
+
+//karzler
+#include<sstream>
+#include<string>
+#include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
@@ -1007,12 +1013,21 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
       // Do FastISel on as many instructions as possible.
       for (; BI != Begin; --BI) {
         const Instruction *Inst = llvm::prior(BI);
+        
+        //karzler
+        if (Inst->getMetadata("set.ID")){
+			errs() << "ISel: "<<cast<MDString>(Inst->getMetadata("set.ID")->getOperand(0))->getString()<<"\n";
+			MachineInstrBuilder::setCurrentMapID(cast<MDString>(Inst->getMetadata("set.ID")->getOperand(0))->getString());
+		}//end-karzler
+			
 
         // If we no longer require this instruction, skip it.
         if (isFoldedOrDeadInstruction(Inst, FuncInfo)) {
           --NumFastIselRemaining;
           continue;
         }
+        
+        
 
         // Bottom-up: reset the insert pos at the top, after any local-value
         // instructions.

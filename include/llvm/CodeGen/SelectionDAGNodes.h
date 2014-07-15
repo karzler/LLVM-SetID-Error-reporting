@@ -35,6 +35,11 @@
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
+//karzler
+#include "llvm/IR/Metadata.h"
+#include "llvm/Support/raw_ostream.h"
+#include <string>
+
 namespace llvm {
 
 class SelectionDAG;
@@ -343,6 +348,7 @@ private:
 
   /// debugLoc - source line information.
   DebugLoc debugLoc;
+  std::string mapID;      //karzler
 
   // The ordering of the SDNodes. It roughly corresponds to the ordering of the
   // original LLVM instructions.
@@ -429,10 +435,13 @@ public:
 
   /// getDebugLoc - Return the source location info.
   const DebugLoc getDebugLoc() const { return debugLoc; }
-
+  
+  const std::string getMapID() const { return mapID; } //karzler
   /// setDebugLoc - Set source location info.  Try to avoid this, putting
   /// it in the constructor is preferable.
   void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
+  
+  void setMapID(const std::string id) { mapID = id; } //karzler
 
   /// use_iterator - This class provides iterator support for SDUse
   /// operands that use a specific SDNode.

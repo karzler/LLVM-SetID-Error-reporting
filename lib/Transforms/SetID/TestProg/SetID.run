@@ -1,0 +1,1 @@
+/home/karzler/llvm/build/Release+Asserts/bin/opt -load /home/karzler/llvm/build/Release+Asserts/lib/SetID.so -SetID --time-passes < hello.bc > /dev/null

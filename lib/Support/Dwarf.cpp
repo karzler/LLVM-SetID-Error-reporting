@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
+
 using namespace llvm;
 using namespace dwarf;
 
@@ -94,6 +96,7 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
   case DW_TAG_GNU_formal_parameter_pack:
     return "DW_TAG_GNU_formal_parameter_pack";
   case DW_TAG_APPLE_property:            return "DW_TAG_APPLE_property";
+  case DW_TAG_map_id:                 	 return "DW_TAG_map_id"; //karzler-- Adding user-defined dwarf tag...
   }
   return 0;
 }
@@ -254,6 +257,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_GNU_addr_base:              return "DW_AT_GNU_addr_base";
   case DW_AT_GNU_pubnames:               return "DW_AT_GNU_pubnames";
   case DW_AT_GNU_pubtypes:               return "DW_AT_GNU_pubtypes";
+  case DW_AT_map_id:                     return "DW_AT_map_id";      //karzler
   }
   return 0;
 }
@@ -291,6 +295,9 @@ const char *llvm::dwarf::FormEncodingString(unsigned Encoding) {
     // DWARF5 Fission Extension Forms
   case DW_FORM_GNU_addr_index:           return "DW_FORM_GNU_addr_index";
   case DW_FORM_GNU_str_index:            return "DW_FORM_GNU_str_index";
+  
+  //Instruction ID Labeling DWARF tag-- karzler
+  case DW_AT_map_id:                     return "DW_AT_map_id";
   }
   return 0;
 }

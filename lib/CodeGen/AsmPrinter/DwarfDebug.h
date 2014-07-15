@@ -27,6 +27,13 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DebugLoc.h"
 
+#include "llvm/Support/CommandLine.h" //karzler
+#include "llvm/CodeGen/MachineInstr.h"
+#include<memory>
+#include "llvm/Support/raw_ostream.h"
+#include<sstream>
+#include<string>
+
 namespace llvm {
 
 class CompileUnit;
@@ -587,6 +594,7 @@ private:
 
   /// \brief Ensure that a label will be emitted before MI.
   void requestLabelBeforeInsn(const MachineInstr *MI) {
+	errs() << "ID Before Instr: " << MI->getMapID() << "\n"; //karzler
     LabelsBeforeInsn.insert(std::make_pair(MI, (MCSymbol*)0));
   }
 
@@ -595,6 +603,7 @@ private:
 
   /// \brief Ensure that a label will be emitted after MI.
   void requestLabelAfterInsn(const MachineInstr *MI) {
+	errs() << "Request ID: " << MI->getMapID() << "\n";   //karzler
     LabelsAfterInsn.insert(std::make_pair(MI, (MCSymbol*)0));
   }
 

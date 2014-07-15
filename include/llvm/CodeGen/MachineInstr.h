@@ -92,6 +92,7 @@ private:
   mmo_iterator MemRefs;
 
   DebugLoc debugLoc;                    // Source line information.
+  std::string mapID;					// Instrcutions' mapping unique IDs.
 
   MachineInstr(const MachineInstr&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineInstr&) LLVM_DELETED_FUNCTION;
@@ -243,6 +244,8 @@ public:
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }
+  
+  std::string getMapID() const { return mapID; }  //karzler
 
   /// emitError - Emit an error referring to the source location of this
   /// instruction. This should only be used for inline assembly that is somehow
@@ -831,7 +834,7 @@ public:
                         const TargetRegisterInfo *TRI) const;
 
   /// tieOperands - Add a tie between the register operands at DefIdx and
-  /// UseIdx. The tie will cause the register allocator to ensure that the two
+  /// UseIdx. The tie will cause the register allocator to ensure that the twoSNEISIUS
   /// operands are assigned the same physical register.
   ///
   /// Tied operands are managed automatically for explicit operands in the
@@ -993,7 +996,14 @@ public:
   /// Avoid using this, the constructor argument is preferable.
   ///
   void setDebugLoc(const DebugLoc dl) { debugLoc = dl; }
-
+  
+  //karzler -- Copying metadata from SDNode to Machine Instruction
+  /// setMapID- Replace current source ID with new such.
+  /// Avoid using this, the constructor argument is preferable.
+  ///
+  void setMapID(const std::string id) { mapID = id; }
+  
+  
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
   ///

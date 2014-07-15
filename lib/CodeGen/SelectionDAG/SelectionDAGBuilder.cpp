@@ -939,6 +939,12 @@ SDValue SelectionDAGBuilder::getControlRoot() {
 }
 
 void SelectionDAGBuilder::visit(const Instruction &I) {
+  //karzler
+  if (I.getMetadata("set.ID") != NULL ){
+    errs() << "DAGBuilder: "<< cast<MDString>(I.getMetadata("set.ID")->getOperand(0))->getString() << "\n";
+  }
+
+
   // Set up outgoing PHI node register values before emitting the terminator.
   if (isa<TerminatorInst>(&I))
     HandlePHINodesInSuccessorBlocks(I.getParent());
@@ -947,10 +953,20 @@ void SelectionDAGBuilder::visit(const Instruction &I) {
 
   CurInst = &I;
 
+
   visit(I.getOpcode(), I);
+
 
   if (!isa<TerminatorInst>(&I) && !HasTailCall)
     CopyToExportRegsIfNeeded(&I);
+
+  errs()<<"\n";
+  I.dump();
+  SDValue SDForID = NodeMap[&I];//karzler
+  if (SDForID.getNode() != NULL){
+    SDForID.getNode()->setMapID(cast<MDString>(I.getMetadata("set.ID")->getOperand(0))->getString());
+    errs() << "SDForID:visit: " << cast<MDString>(I.getMetadata("set.ID")->getOperand(0))->getString() << "\n";
+  }//karzler
 
   CurInst = NULL;
 }
@@ -970,6 +986,8 @@ void SelectionDAGBuilder::visit(unsigned Opcode, const User &I) {
 #include "llvm/IR/Instruction.def"
   }
 }
+
+
 
 // resolveDanglingDebugInfo - if we saw an earlier dbg_value referring to V,
 // generate the debug data structures now that we've seen its definition.
@@ -4418,6 +4436,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   SDLoc sdl = getCurSDLoc();
   DebugLoc dl = getCurDebugLoc();
   SDValue Res;
+  
+   if (I.getMetadata("set.ID")){
+    errs() << "SDB:visitIntrinsicCall: " << cast<MDString>(I.getMetadata("set.ID")->getOperand(0))->getString() << "\n";//karzler
+  }
 
   switch (Intrinsic) {
   default:

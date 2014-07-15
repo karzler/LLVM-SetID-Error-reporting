@@ -44,6 +44,9 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+
+#include "llvm/Support/raw_ostream.h"  //karzler
+
 using namespace llvm;
 
 static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print",
@@ -1324,6 +1327,15 @@ MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
 
 // Process beginning of an instruction.
 void DwarfDebug::beginInstruction(const MachineInstr *MI) {
+  
+
+  //karzler
+  if (MI->getMapID().size() != 0){
+    errs() << "\t\tDWARF:beginInstruction: " << MI->getMapID() << "\n";
+    StringRef mapID = StringRef(MI->getMapID());
+    Asm->OutStreamer.EmitDebugLabel(MMI->getContext().GetOrCreateSymbol(mapID) );
+  }//end karzler
+  
   // Check if source location changes, but ignore DBG_VALUE locations.
   if (!MI->isDebugValue()) {
     DebugLoc DL = MI->getDebugLoc();
